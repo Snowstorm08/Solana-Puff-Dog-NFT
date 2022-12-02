@@ -8,6 +8,8 @@ export TF_VAR_MY_IP_ADDRESS="x.x.x.x"
 ```bash
 cd terraform
 sudo terraform apply
+# Target an single resource
+sudo terraform plan -target="aws_route53_record.cname_www"
 ```
 
 ### Ansible

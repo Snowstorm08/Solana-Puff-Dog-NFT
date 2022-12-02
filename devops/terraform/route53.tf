@@ -3,6 +3,16 @@ resource "aws_route53_zone" "production" {
   name = var.base_domain_name
 }
 
+# www CNAME record
+resource "aws_route53_record" "cname_www" {
+  zone_id = aws_route53_zone.production.id
+  name    = "www.${var.base_domain_name}"
+  type    = "CNAME"
+  ttl     = 3600
+  records = [var.base_domain_name]
+}
+
+
 # MX record
 resource "aws_route53_record" "mx" {
   zone_id = aws_route53_zone.production.id

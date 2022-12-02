@@ -41,7 +41,7 @@ resource "aws_eip" "elastic_ip" {
 resource "aws_security_group" "main" {
   egress = [
     {
-      cidr_blocks      = ["0.0.0.0/0", ]
+      cidr_blocks      = ["0.0.0.0/0"]
       description      = ""
       from_port        = 0
       ipv6_cidr_blocks = []
@@ -55,7 +55,7 @@ resource "aws_security_group" "main" {
   ingress = [
     # An IP that is allowed to ssh into the host.
     {
-      cidr_blocks      = [var.MY_IP_ADDRESS]
+      cidr_blocks      = ["${var.MY_IP_ADDRESS}/32"]
       description      = ""
       from_port        = 22
       ipv6_cidr_blocks = []
