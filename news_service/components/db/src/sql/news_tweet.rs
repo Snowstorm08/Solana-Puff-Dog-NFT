@@ -26,7 +26,6 @@ pub async fn insert_news_tweet(pool: &PgPool, news_tweet: NewsTweet) -> anyhow::
     Ok(())
 }
 
-
 pub async fn find_news_tweet_by_tweet_id(pool: &PgPool, tweet_id: i64) -> Option<NewsTweet> {
     let news_tweet_result = sqlx::query_as!(
         NewsTweet,

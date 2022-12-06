@@ -20,7 +20,7 @@ pub fn lookup_period() -> OffsetDateTime {
     if cfg!(debug_assertions) {
         // 3 days in debug mode
         now_utc_timestamp().checked_add((-3).days()).unwrap()
-    }else{
+    } else {
         // 90 days in release mode
         now_utc_timestamp().checked_add((-90).days()).unwrap()
     }

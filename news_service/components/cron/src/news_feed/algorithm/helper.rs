@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-
 use crate::news_feed::models::tweet_info::TweetInfo;
 use db::queries::news_referenced_url_query::NewsReferencedUrlQuery;
+use deunicode::deunicode_char;
+use std::collections::HashMap;
 
 // Populate a map of author_id to score
 // author_id -> user_score
@@ -52,4 +52,75 @@ pub fn populate_url_to_tweet_map(
         }
     }
     url_to_tweet_map
+}
+
+// Source: https://github.com/Stebalien/slug-rs/blob/master/src/lib.rs
+fn slugify(s: &str) -> String {
+    // Split the sentence into a vector of words
+    let words: Vec<&str> = s.split(" ").collect();
+    // Get the first eight words from the vector and create a new string
+    let s = words[..10].to_vec().join(" ");
+    let mut slug: Vec<u8> = Vec::with_capacity(s.len());
+
+    // Starts with true to avoid leading -
+    let mut prev_is_dash = true;
+    {
+        let mut push_char = |x: u8| {
+            match x {
+                b'a'..=b'z' | b'0'..=b'9' => {
+                    prev_is_dash = false;
+                    slug.push(x);
+                }
+                b'A'..=b'Z' => {
+                    prev_is_dash = false;
+                    // Manual lowercasing as Rust to_lowercase() is unicode
+                    // aware and therefore much slower
+                    slug.push(x - b'A' + b'a');
+                }
+                _ => {
+                    if !prev_is_dash {
+                        slug.push(b'-');
+                        prev_is_dash = true;
+                    }
+                }
+            }
+        };
+
+        for c in s.chars() {
+            if c.is_ascii() {
+                (push_char)(c as u8);
+            } else {
+                for &cx in deunicode_char(c).unwrap_or("-").as_bytes() {
+                    (push_char)(cx);
+                }
+            }
+        }
+    }
+
+    // It's not really unsafe in practice, we know we have ASCII
+    let mut string = unsafe { String::from_utf8_unchecked(slug) };
+    if string.ends_with('-') {
+        string.pop();
+    }
+    // We likely reserved more space than needed.
+    string.shrink_to_fit();
+    string
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_slugify() {
+        assert_eq!(
+            slugify("The Texas Group Waging a National Crusade Against Climate Action"),
+            "the-texas-group-waging-a-national-crusade-against-climate-action"
+        );
+        assert_eq!(
+            slugify("Whistleblower: Enviva claim of ‘being good for the planet… all nonsense’"),
+            "whistleblower-enviva-claim-of-being-good-for-the-planet-all"
+        );
+    }
 }

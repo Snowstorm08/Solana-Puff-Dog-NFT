@@ -77,7 +77,6 @@ pub async fn get_list_members(
     Ok(list_users)
 }
 
-
 pub async fn get_users_by_author_id(
     twitter_api: &TwitterApi<BearerToken>,
     author_ids: Vec<i64>,
