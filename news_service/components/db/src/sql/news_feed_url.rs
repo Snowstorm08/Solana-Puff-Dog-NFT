@@ -10,11 +10,11 @@ pub async fn insert_news_feed_url(
         NewsFeedUrl,
         r#"
             INSERT INTO news_feed_url ( 
-                url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str
+                url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str
              )
-            VALUES ( $1, $2, $3, $4, $5, $6, $7, $8)
+            VALUES ( $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING 
-                url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str
+                url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str
             "#,
         news_feed_url.url_slug,
         news_feed_url.url_id,
@@ -24,6 +24,8 @@ pub async fn insert_news_feed_url(
         news_feed_url.is_climate_related,
         news_feed_url.created_at,
         news_feed_url.created_at_str,
+        news_feed_url.tweeted_at,
+        news_feed_url.tweeted_at_str,
     )
     .fetch_one(pool)
     .await
@@ -33,7 +35,7 @@ pub async fn find_news_feed_url_by_url_id(pool: &PgPool, url_id: i32) -> Option<
     let query = sqlx::query_as!(
         NewsFeedUrl,
         r#"
-            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str
+            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str
             FROM news_feed_url
             WHERE url_id = $1;
         "#,
@@ -111,7 +113,7 @@ pub async fn find_news_feed_url_by_url_slug(
     let query = sqlx::query_as!(
         NewsFeedUrl,
         r#"
-            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str
+            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str
             FROM news_feed_url
             WHERE url_slug = $1        
         "#,
@@ -127,7 +129,7 @@ pub async fn find_top_news_feed_urls_without_is_climate_related_set(
     let query = sqlx::query_as!(
         NewsFeedUrl,
         r#"
-            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str
+            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str
             FROM news_feed_url
             WHERE 
                 is_climate_related IS NULL 

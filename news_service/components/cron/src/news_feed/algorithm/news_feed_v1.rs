@@ -92,6 +92,8 @@ async fn populate_news_feed_urls_v1(
                 created_at_str: datetime_to_str(datetime_from_unix_timestamp(
                     first_tweet.created_at,
                 )),
+                tweeted_at: None,
+                tweeted_at_str: None,
             };
             insert_news_feed_url(db_pool, news_feed_url).await?;
         } else {

@@ -146,6 +146,8 @@ pub mod test_util {
             is_climate_related: Some(true),
             created_at: created_at_timestamp,
             created_at_str: String::from("created_at_str"),
+            tweeted_at: None,
+            tweeted_at_str: None,
         };
         insert_news_feed_url(db_pool, news_feed_url).await.unwrap();
     }

@@ -12,4 +12,6 @@ pub struct NewsFeedUrl {
     pub is_climate_related: Option<bool>,
     pub created_at: i64,
     pub created_at_str: String,
+    pub tweeted_at: Option<i64>,
+    pub tweeted_at_str: Option<String>
 }
