@@ -25,6 +25,9 @@ export default function AboutContent() {
               Twitter.
             </p>
 
+          <p className="mt-8 text-xl font-extrabold tracking-tight text-gray-900">
+            Twitter Lists
+          </p>
             <p className="mx-auto mt-5  text-lg text-gray-600">
               3500+ Twitter accounts are imported from the lists below to
               generate the user list:
@@ -77,7 +80,9 @@ export default function AboutContent() {
                 .
               </li>
             </ul>
-
+            <p className="mt-8 text-xl font-extrabold tracking-tight text-gray-900">
+            News Feed
+          </p>
             <p className="mx-auto mt-5  text-lg text-gray-600">
               The news feed uses a ranking algorithm to find trending articles.
             </p>
@@ -109,6 +114,9 @@ export default function AboutContent() {
               is used to classify each article, to ensure only climate related
               articles appear in the news feed.
             </p>
+            <p className="mt-8 text-xl font-extrabold tracking-tight text-gray-900">
+            Source Code
+          </p>
             <p className="mx-auto mt-5 text-lg text-gray-600">
               Our source code is available on{" "}
               <Link
@@ -120,9 +128,9 @@ export default function AboutContent() {
               {". "}
               Contributions are welcome!
             </p>
-            {/* <p className="mt-8 text-2xl font-extrabold tracking-tight text-gray-900">
+            <p className="mt-8 text-xl font-extrabold tracking-tight text-gray-900">
             About Us
-          </p> */}
+          </p>
             <p className="mx-auto mt-5  text-lg text-gray-600">
               Made with 💚 in Nanaimo, Canada by{" "}
               <Link
