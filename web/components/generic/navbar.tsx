@@ -29,7 +29,7 @@ export default function NavBar(props: NavBarProps) {
               <div className="flex flex-shrink-0">
                 <img
                   className="block h-8 w-auto mb-2"
-                  src="/cac_logo.svg"
+                  src="/cn_logo.svg"
                   alt="Climate News"
                 />
               </div>

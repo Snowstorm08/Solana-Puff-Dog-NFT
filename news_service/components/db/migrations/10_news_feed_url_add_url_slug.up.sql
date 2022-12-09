@@ -1,3 +1,3 @@
-TRUNCATE news_feed_url RESTART IDENTITY;
+-- TRUNCATE news_feed_url RESTART IDENTITY;
 ALTER TABLE news_feed_url 
 ADD url_slug TEXT NOT NULL UNIQUE;
