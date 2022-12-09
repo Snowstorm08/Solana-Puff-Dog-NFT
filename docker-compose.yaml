@@ -16,7 +16,7 @@ services:
         - client-side   
 
   web:
-    image: climateactioncollective/web:latest
+    image: climatenews/web:latest
     build:
       context: web
       target: development
@@ -38,7 +38,7 @@ services:
       replicas: 1
 
   news_api:
-    image: climateactioncollective/news_api:latest
+    image: climatenews/news_api:latest
     build:
       context: news_service
       args:
@@ -67,7 +67,7 @@ services:
       replicas: 1      
 
   news_cron:
-    image: climateactioncollective/news_cron:latest
+    image: climatenews/news_cron:latest
     build:
       context: news_service
       args:

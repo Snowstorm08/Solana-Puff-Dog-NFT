@@ -25,5 +25,5 @@ jobs:
           push: true
           build-args: SERVICE_NAME=api
           tags: |
-            climateactioncollective/news_api:${{ github.ref_name }}
-            climateactioncollective/news_api:latest
+            climatenews/news_api:${{ github.ref_name }}
+            climatenews/news_api:latest
