@@ -1,12 +1,12 @@
 use crate::graphql::errors::GqlError;
 use async_graphql::{ErrorExtensions, FieldResult};
 use db::{
-    models::news_cron_job::NewsCronJob, sql::news_cron_job::get_last_completed_news_cron_job,
+    models::news_cron_job::NewsCronJob, sql::news_cron_job::get_last_completed_main_news_cron_job,
 };
 use sqlx::postgres::PgPool;
 
 pub async fn news_feed_status_query<'a>(db_pool: &PgPool) -> FieldResult<NewsCronJob> {
-    match get_last_completed_news_cron_job(db_pool).await {
+    match get_last_completed_main_news_cron_job(db_pool).await {
         Ok(news_cron_job) => Ok(news_cron_job),
         Err(_) => Err(GqlError::NotFound.extend()),
     }

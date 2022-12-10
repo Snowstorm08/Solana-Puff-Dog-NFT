@@ -1,0 +1,1 @@
+ALTER TABLE news_cron_job DROP COLUMN cron_type;

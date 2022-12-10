@@ -1,4 +1,4 @@
-use crate::models::news_cron_job::{NewsCronJob, NewsCronJobWithId};
+use crate::models::news_cron_job::{CronType, NewsCronJob, NewsCronJobWithId};
 use anyhow::Result;
 use sqlx::PgPool;
 
@@ -10,12 +10,13 @@ pub async fn insert_news_cron_job(
         NewsCronJobWithId,
         r#"
             INSERT INTO news_cron_job ( 
-                started_at, started_at_str, completed_at, completed_at_str, error
+                cron_type, started_at, started_at_str, completed_at, completed_at_str, error
              )
-            VALUES ( $1, $2, $3, $4, $5)
+            VALUES ( $1, $2, $3, $4, $5, $6)
             RETURNING 
-                id, started_at, started_at_str, completed_at, completed_at_str, error
+                id, cron_type, started_at, started_at_str, completed_at, completed_at_str, error
             "#,
+        news_cron_job.cron_type,
         news_cron_job.started_at,
         news_cron_job.started_at_str,
         news_cron_job.completed_at,
@@ -72,16 +73,19 @@ pub async fn update_news_cron_job_error(
     Ok(rows_affected > 0)
 }
 
-pub async fn get_last_completed_news_cron_job(pool: &PgPool) -> Result<NewsCronJob, sqlx::Error> {
+pub async fn get_last_completed_main_news_cron_job(
+    pool: &PgPool,
+) -> Result<NewsCronJob, sqlx::Error> {
     sqlx::query_as!(
         NewsCronJob,
         r#"
-        SELECT started_at, started_at_str, completed_at, completed_at_str, error            
+        SELECT cron_type, started_at, started_at_str, completed_at, completed_at_str, error            
         FROM news_cron_job
-        WHERE completed_at IS NOT NULL
+        WHERE completed_at IS NOT NULL AND cron_type = $1
         ORDER BY completed_at DESC
         LIMIT 1
-     "#
+     "#,
+        CronType::Main.to_string()
     )
     .fetch_one(pool)
     .await

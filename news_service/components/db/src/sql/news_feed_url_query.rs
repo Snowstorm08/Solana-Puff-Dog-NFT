@@ -15,6 +15,7 @@ pub async fn get_news_feed_urls(
             nfu.url_id, 
             nfu.url_score,
             nfu.num_references,
+            nfu.tweeted_at,
             u.username as first_referenced_by_username,
             nfu.created_at,
             tu.title,
@@ -34,7 +35,6 @@ pub async fn get_news_feed_urls(
             AND nfu.is_climate_related = True  
         ORDER BY
             url_score DESC
-            -- num_references DESC
         LIMIT $2 
      "#,
         timestamp,
@@ -56,6 +56,7 @@ pub async fn get_news_feed_url(
             nfu.url_id, 
             nfu.url_score,
             nfu.num_references,
+            nfu.tweeted_at,
             u.username as first_referenced_by_username,
             nfu.created_at,
             tu.title,
@@ -73,7 +74,7 @@ pub async fn get_news_feed_url(
         WHERE
             nfu.url_slug = $1
      "#,
-     url_slug
+        url_slug
     )
     .fetch_one(pool)
     .await

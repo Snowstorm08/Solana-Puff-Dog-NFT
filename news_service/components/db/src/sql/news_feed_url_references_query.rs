@@ -5,7 +5,7 @@ use crate::queries::news_feed_url_references_query::NewsFeedUrlReferencesQuery;
 // TODO add user_score
 pub async fn get_news_feed_url_references(
     pool: &PgPool,
-    url_slug: String
+    url_slug: String,
 ) -> Option<Vec<NewsFeedUrlReferencesQuery>> {
     let news_feed_url_references_query_result = sqlx::query_as!(
         NewsFeedUrlReferencesQuery,

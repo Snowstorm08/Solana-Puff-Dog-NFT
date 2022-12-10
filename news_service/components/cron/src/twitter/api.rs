@@ -100,19 +100,15 @@ pub async fn get_users_by_author_id(
     Ok(user_vec)
 }
 
-pub async fn get_user_by_author_id(
+pub async fn post_tweet(
     twitter_api: &TwitterApi<BearerToken>,
-    author_id: i64,
-) -> Result<Option<User>> {
-    info!("Twitter API - get_user_by_author_id: {}", author_id);
-    let user_response = twitter_api
-        .get_user(i64_to_numeric_id(author_id))
-        .user_fields(USER_FIELDS)
-        .send()
-        .await;
+    text: String,
+) -> Result<Option<Tweet>> {
+    info!("Twitter API - post_tweet: {}", text);
+    let tweet_response = twitter_api.post_tweet().text(text).send().await;
 
-    parse_error_response(&user_response).await?;
-    Ok(user_response?.into_data())
+    parse_error_response(&tweet_response).await?;
+    Ok(tweet_response?.into_data())
 }
 
 pub async fn get_user_tweets(

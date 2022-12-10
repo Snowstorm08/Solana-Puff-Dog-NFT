@@ -13,5 +13,5 @@ pub struct NewsFeedUrl {
     pub created_at: i64,
     pub created_at_str: String,
     pub tweeted_at: Option<i64>,
-    pub tweeted_at_str: Option<String>
+    pub tweeted_at_str: Option<String>,
 }

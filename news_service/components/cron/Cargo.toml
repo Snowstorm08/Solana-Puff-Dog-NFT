@@ -26,6 +26,9 @@ time = { version = "0.3.2", features = ["macros", "formatting", "parsing"] }
 # Runtime
 tokio = {version = "1.15.0", features = ["full"]}
 
+# schedule tasks in tokio runtime
+tokio_schedule = "0.3.0"
+
 # Enum helpers 
 strum = "0.24.1"
 strum_macros = "0.24.3"
@@ -54,6 +57,9 @@ lingua = { version = "1.4.0", default-features = false, features = ["english", "
 # JSON
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0.64" }
+
+# A macro for declaring lazily evaluated statics
+lazy_static = "1.4.0"
 
 # Workaround for https://github.com/gyscos/zstd-rs/issues/177
 zstd-sys = "=2.0.1+zstd.1.5.2"

@@ -197,6 +197,7 @@ pub mod test_util {
         truncate_news_cron_job(db_pool).await.unwrap();
 
         let news_cron_job = NewsCronJob {
+            cron_type: String::from("Main"),
             started_at: start_datetime.unix_timestamp(),
             started_at_str: datetime_to_str(start_datetime),
             completed_at: Some(start_datetime.unix_timestamp()),

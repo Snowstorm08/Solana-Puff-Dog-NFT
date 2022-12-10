@@ -9,6 +9,8 @@ pub struct NewsFeedUrlQuery {
     pub url_id: i32,
     pub url_score: i32,
     pub num_references: i32,
+    #[graphql(skip)]
+    pub tweeted_at: Option<i64>,
     pub first_referenced_by_username: String,
     pub created_at: i64,
     pub title: String,
