@@ -1,8 +1,8 @@
-use crate::twitter::api::post_tweet;
+// use crate::twitter::api::post_tweet;
 use crate::twitter::init_twitter_api;
-use crate::twitter::oauth::get_api_user_ctx;
+// use crate::twitter::oauth::get_api_user_ctx;
 use anyhow::Result;
-use chrono::{Local, Utc};
+use chrono::{Local};
 use db::constants::{NEWS_FEED_URLS_LIMIT, NEWS_FEED_URLS_NUM_DAYS};
 use db::models::news_cron_job::{CronType, NewsCronJob};
 use db::queries::news_feed_url_query::NewsFeedUrlQuery;
@@ -11,18 +11,18 @@ use db::sql::news_cron_job::{
 };
 use db::sql::news_feed_url_query::get_news_feed_urls;
 use db::util::convert::{datetime_to_str, now_utc_datetime};
-use db::util::db::init_db;
+// use db::util::db::init_db;
 use db::util::time::past_days;
 use log::{error, info};
 use sqlx::PgPool;
-use tokio_schedule::{every, Job};
+// use tokio_schedule::{every, Job};
 
 pub async fn start_tweet_scheduler() {
     info!("start_tweet_scheduler - {:?}", Local::now());
-    let db_pool = init_db().await;
-    if let Err(err) = start_tweet_cron_job(&db_pool).await {
-        println!("start_tweet_cron_job failed: {:?}", err);
-    }
+    // let db_pool = init_db().await;
+    // if let Err(err) = start_tweet_cron_job(&db_pool).await {
+    //     println!("start_tweet_cron_job failed: {:?}", err);
+    // }
     // let tweet_scheduler = every(1).minutes().in_timezone(&Utc).perform(|| async {
     //     if let Err(err) = start_tweet_cron_job(&db_pool).await {
     //         println!("start_tweet_cron_job failed: {:?}", err);
@@ -64,7 +64,7 @@ pub async fn start_tweet_cron_job(db_pool: &PgPool) -> anyhow::Result<()> {
 
 pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
     info!("tweet_cron_job started - {:?}", Local::now());
-    let twitter_api = init_twitter_api();
+    // let twitter_api = init_twitter_api();
     let recent_timestamp = past_days(NEWS_FEED_URLS_NUM_DAYS).unix_timestamp();
 
     match get_news_feed_urls(db_pool, recent_timestamp, NEWS_FEED_URLS_LIMIT).await {
