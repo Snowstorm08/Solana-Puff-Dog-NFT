@@ -49,10 +49,15 @@ docker stack rm climate_action_stack
 docker stack ps climate_action_stack
 
 # Display service info
-docker service ps climate_action_stack_db
+docker service ps climate_action_stack_news_cron
 
 # Inspect a service
 docker service inspect --pretty climate_action_stack_news_cron
+
+# Run command
+docker container ls
+docker exec -it f855a1118d35 /bin/bash
+
 
 # Stack logs for a service
 docker service logs climate_action_stack_db --follow
@@ -60,6 +65,7 @@ docker service logs climate_action_stack_news_api --follow
 docker service logs climate_action_stack_news_cron --follow
 docker service logs climate_action_stack_web --follow
 docker service logs climate_action_stack_caddy
+
 ```
 
 
