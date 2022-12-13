@@ -1,5 +1,7 @@
 use crate::news_feed::models::tweet_info::TweetInfo;
-use db::queries::news_referenced_url_query::NewsReferencedUrlQuery;
+use db::{
+    constants::NEWS_FEED_SLUG_NUM_WORDS, queries::news_referenced_url_query::NewsReferencedUrlQuery,
+};
 use deunicode::deunicode_char;
 use std::{cmp, collections::HashMap};
 
@@ -59,7 +61,9 @@ pub fn slugify(s: &str) -> String {
     // Split the sentence into a vector of words
     let words: Vec<&str> = s.split(" ").collect();
     // Get the first eight words from the vector and create a new string
-    let s = words[..cmp::min(10, words.len())].to_vec().join(" ");
+    let s = words[..cmp::min(NEWS_FEED_SLUG_NUM_WORDS, words.len())]
+        .to_vec()
+        .join(" ");
     let mut slug: Vec<u8> = Vec::with_capacity(s.len());
 
     // Starts with true to avoid leading -
@@ -116,11 +120,11 @@ mod tests {
     fn test_slugify() {
         assert_eq!(
             slugify("The Texas Group Waging a National Crusade Against Climate Action"),
-            "the-texas-group-waging-a-national-crusade-against-climate-action"
+            "the-texas-group-waging-a-national-crusade-against"
         );
         assert_eq!(
             slugify("Whistleblower: Enviva claim of ‘being good for the planet… all nonsense’"),
-            "whistleblower-enviva-claim-of-being-good-for-the-planet-all"
+            "whistleblower-enviva-claim-of-being-good-for-the"
         );
     }
 }

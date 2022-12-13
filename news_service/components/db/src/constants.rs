@@ -1,3 +1,4 @@
 pub const NEWS_FEED_URLS_NUM_DAYS: i64 = 3;
 pub const NEWS_FEED_URLS_LIMIT: i64 = 20;
 pub const NEWS_FEED_MIN_NUM_SHARES_BEFORE_TWEETING: i32 = 3;
+pub const NEWS_FEED_SLUG_NUM_WORDS: usize = 8;
