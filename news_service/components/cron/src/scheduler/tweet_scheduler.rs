@@ -99,16 +99,13 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
 }
 
 pub fn get_tweet_text(news_feed_url: &NewsFeedUrlQuery) -> String {
-    // TODO update tweet format
     // TODO copy shared logic from the frontend
     format!(
-        r#"
-        {}
-        https://climatenews.app/news_feed/{}
-        Shared by: {} and {} others
-        Article link: {}
-        #ClimateNews 
-        "#,
+r#"{}
+https://climatenews.app/news_feed/{}
+Shared by: {} and {} others
+Article link: {}
+#ClimateNews"#,
         news_feed_url.title,
         news_feed_url.url_slug,
         news_feed_url.first_referenced_by_username,
@@ -116,3 +113,37 @@ pub fn get_tweet_text(news_feed_url: &NewsFeedUrlQuery) -> String {
         news_feed_url.expanded_url_parsed
     )
 }
+
+
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_get_tweet_text() {
+
+        let news_feed_url_query = NewsFeedUrlQuery {
+            url_slug: String::from("example-slug"),
+            url_id: 1,
+            url_score: 100,
+            num_references: 3,
+            tweeted_at: None,
+            first_referenced_by_username: String::from("climatenews_app"),
+            created_at: 0,
+            title: String::from("Example Title"),
+            description: String::from("example description"),
+            expanded_url_parsed: String::from("https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve"),
+            expanded_url_host: String::from("https://www.theguardian.com"),
+            display_url: String::from("https://www.theguardian.com"),
+             preview_image_thumbnail_url: None,
+             preview_image_url: None,
+        };
+        
+        assert_eq!(get_tweet_text(&news_feed_url_query), 
+        String::from("Example Title\nhttps://climatenews.app/news_feed/example-slug\nShared by: climatenews_app and 2 others\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews"));
+    }
+
+}
+
