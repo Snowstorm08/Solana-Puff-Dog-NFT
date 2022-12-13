@@ -2,17 +2,18 @@ use crate::twitter::api::post_tweet;
 use crate::twitter::oauth::get_api_user_ctx;
 use anyhow::Result;
 use chrono::Local;
-use db::constants::{NEWS_FEED_URLS_LIMIT, NEWS_FEED_URLS_NUM_DAYS};
+use db::constants::{NEWS_FEED_URLS_LIMIT, NEWS_FEED_URLS_NUM_DAYS, NEWS_FEED_MIN_NUM_SHARES_BEFORE_TWEETING};
 use db::models::news_cron_job::{CronType, NewsCronJob};
 use db::queries::news_feed_url_query::NewsFeedUrlQuery;
 use db::sql::news_cron_job::{
     insert_news_cron_job, update_news_cron_job_completed_at, update_news_cron_job_error,
 };
+use db::sql::news_feed_url::update_news_feed_url_tweeted_at;
 use db::sql::news_feed_url_query::get_news_feed_urls;
 use db::util::convert::{datetime_to_str, now_utc_datetime};
 use db::util::db::init_db;
 use db::util::time::past_days;
-use log::{error, info, warn};
+use log::{error, info, warn, debug};
 use sqlx::PgPool;
 // use tokio_schedule::{every, Job};
 
@@ -67,10 +68,13 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
 
     match get_news_feed_urls(db_pool, recent_timestamp, NEWS_FEED_URLS_LIMIT).await {
         Ok(news_feed_urls) => {
-            // NewsFeedUrls not shared on Twitter yet
+            // The NewsFeedUrls not shared on Twitter yet
             let news_feed_urls_not_tweeted: Vec<NewsFeedUrlQuery> = news_feed_urls
                 .into_iter()
-                .filter(|nfu| nfu.tweeted_at.is_none())
+                .filter(|nfu| 
+                    nfu.tweeted_at.is_none() 
+                    && nfu.num_references >= NEWS_FEED_MIN_NUM_SHARES_BEFORE_TWEETING
+                )
                 .collect();
             match news_feed_urls_not_tweeted.first() {
                 Some(news_feed_url) => {
@@ -80,10 +84,24 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
                     );
 
                     let tweet_text = get_tweet_text(news_feed_url);
-                    info!("tweet_text- {}", tweet_text);
-                    let _api_user_ctx = get_api_user_ctx().await;
-                    // post_tweet(&api_user_ctx, tweet_text).await?;
+                    if cfg!(debug_assertions) {
+                        debug!("tweet_text - {}", tweet_text);
+                    }else{
+                        // Only post tweets in release mode
+                        let api_user_ctx = get_api_user_ctx().await;
+                        post_tweet(&api_user_ctx, tweet_text).await?;
+                    }
+
                     //Update tweeted_at value
+                    let now_utc_datetime = now_utc_datetime();
+                    update_news_feed_url_tweeted_at(
+                        db_pool, 
+                        news_feed_url.url_id,
+                        now_utc_datetime.unix_timestamp(),
+                        datetime_to_str(now_utc_datetime),
+                    ).await?;
+
+
                 }
                 None => {
                     warn!("all news_feed_urls have been shared on Twitter");
@@ -114,8 +132,6 @@ Article link: {}
     )
 }
 
-
-
 #[cfg(test)]
 mod tests {
 
@@ -123,12 +139,11 @@ mod tests {
 
     #[test]
     fn test_get_tweet_text() {
-
         let news_feed_url_query = NewsFeedUrlQuery {
             url_slug: String::from("example-slug"),
             url_id: 1,
             url_score: 100,
-            num_references: 3,
+            num_references: 2,
             tweeted_at: None,
             first_referenced_by_username: String::from("climatenews_app"),
             created_at: 0,
@@ -140,10 +155,10 @@ mod tests {
              preview_image_thumbnail_url: None,
              preview_image_url: None,
         };
-        
-        assert_eq!(get_tweet_text(&news_feed_url_query), 
-        String::from("Example Title\nhttps://climatenews.app/news_feed/example-slug\nShared by: climatenews_app and 2 others\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews"));
+
+        assert_eq!(
+            get_tweet_text(&news_feed_url_query),
+            String::from("Example Title\nhttps://climatenews.app/news_feed/example-slug\nShared by: climatenews_app and 1 other\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+    );
     }
-
 }
-

@@ -1841,5 +1841,19 @@
       }
     },
     "query": "\n            SELECT user_id, username, profile_image_url, description, verified, followers_count, listed_count, user_referenced_tweets_count, user_score, last_tweet_id, last_updated_at, last_checked_at\n            FROM news_twitter_user\n            ORDER BY username ASC\n        "
+  },
+  "ffcdf844dc077c39b7546ae33368c7e931a4f3bfec7a2f85832de3d576dc3b1d": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Text",
+          "Int4"
+        ]
+      }
+    },
+    "query": "\n        UPDATE news_feed_url \n        SET tweeted_at = $1, tweeted_at_str = $2\n        WHERE url_id = $3\n        "
   }
 }

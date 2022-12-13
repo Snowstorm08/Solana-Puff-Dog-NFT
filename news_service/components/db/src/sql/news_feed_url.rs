@@ -106,6 +106,27 @@ pub async fn update_news_feed_url_url_is_climate_related(
     .await
 }
 
+pub async fn update_news_feed_url_tweeted_at(
+    pool: &PgPool,
+    url_id: i32,
+    tweeted_at: i64,
+    tweeted_at_str: String
+) -> Result<PgQueryResult, sqlx::Error> {
+    sqlx::query!(
+        r#"
+        UPDATE news_feed_url 
+        SET tweeted_at = $1, tweeted_at_str = $2
+        WHERE url_id = $3
+        "#,
+        tweeted_at,
+        tweeted_at_str,
+        url_id
+    )
+    .execute(pool)
+    .await
+}
+
+
 pub async fn find_news_feed_url_by_url_slug(
     pool: &PgPool,
     url_slug: String,
