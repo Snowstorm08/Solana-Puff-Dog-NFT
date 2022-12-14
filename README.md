@@ -42,7 +42,6 @@ docker-compose logs --tail="all" -f
 docker swarm init 
 
 # Deploy the stack
-# TODO use docker secrets?
 env $(cat .env.dev | xargs) docker stack deploy --compose-file docker-compose.yaml climate_action_stack 
 
 # Remove the stack
@@ -57,10 +56,9 @@ docker service ps climate_action_stack_news_cron
 # Inspect a service
 docker service inspect --pretty climate_action_stack_news_cron
 
-# Run command
+# Run a command in a container
 docker container ls
 docker exec -it f855a1118d35 /bin/bash
-
 
 # Stack logs for a service
 docker service logs climate_action_stack_db --follow
