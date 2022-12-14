@@ -8,7 +8,7 @@ lazy_static::lazy_static! {
     static ref OAUTH2_TOKEN: Mutex<Oauth2Token> = Mutex::new(serde_json::from_reader(
         std::fs::File::open(
             var("TWITTER_OAUTH_TOKEN_FILE").expect("could not find TWITTER_OAUTH_TOKEN_FILE")
-        ).expect("oauth2_token.json not found"),
+        ).expect("TWITTER_OAUTH_TOKEN_FILE file not found"),
     )
     .expect("oauth2_token.json not valid json"));
 }

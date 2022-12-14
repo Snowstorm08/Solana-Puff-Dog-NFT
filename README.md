@@ -56,6 +56,9 @@ docker service ps climate_action_stack_news_cron
 # Inspect a service
 docker service inspect --pretty climate_action_stack_news_cron
 
+# Restart a service
+docker service update --force climate_action_stack_news_cron
+
 # Run a command in a container
 docker container ls
 docker exec -it f855a1118d35 /bin/bash
