@@ -53,7 +53,7 @@ export default function NewsFeedUrlContent(props: NewsFeedUrlContentProps) {
                 src={
                   props.newsFeedUrl.previewImageThumbnailUrl
                     ? props.newsFeedUrl.previewImageThumbnailUrl
-                    : "news_article_placeholder.png"
+                    : "/news_article_placeholder.png"
                 }
                 alt={props.newsFeedUrl?.title}
               />

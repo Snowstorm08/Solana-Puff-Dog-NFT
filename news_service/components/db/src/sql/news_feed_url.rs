@@ -110,7 +110,7 @@ pub async fn update_news_feed_url_tweeted_at(
     pool: &PgPool,
     url_id: i32,
     tweeted_at: i64,
-    tweeted_at_str: String
+    tweeted_at_str: String,
 ) -> Result<PgQueryResult, sqlx::Error> {
     sqlx::query!(
         r#"
@@ -125,7 +125,6 @@ pub async fn update_news_feed_url_tweeted_at(
     .execute(pool)
     .await
 }
-
 
 pub async fn find_news_feed_url_by_url_slug(
     pool: &PgPool,

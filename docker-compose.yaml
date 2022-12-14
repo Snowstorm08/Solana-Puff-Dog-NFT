@@ -81,6 +81,8 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     networks:
       - server-side
+    volumes:
+      - ./oauth:/oauth
     depends_on:
       - db
     healthcheck:

@@ -25,6 +25,9 @@ Set the `OPENAI_API_KEY` & `TWITTER_BEARER_TOKEN` variables in `.env.dev`
 
 ### Test the app with Docker Compose
 ```bash
+# start docker
+service docker start
+
 # Start the app
 docker-compose --env-file ".env.dev" up -d --build 
 
