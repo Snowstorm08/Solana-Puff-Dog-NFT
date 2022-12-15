@@ -20,10 +20,7 @@ const NewsFeedUrlPage: NextPage<NewsFeedUrlPageProps> = ({
 }) => {
   return (
     <>
-      <Meta 
-        title={newsFeedUrl.title}
-        description={newsFeedUrl.description}
-      />
+      <Meta title={newsFeedUrl.title} description={newsFeedUrl.description} />
       <NavBar pageRoute="/" />
       <NewsFeedUrlContent
         newsFeedUrl={newsFeedUrl}
