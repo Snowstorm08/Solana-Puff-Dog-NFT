@@ -468,6 +468,27 @@
     },
     "query": "\n        SELECT \n            rtu.url_id,\n            t.text,\n            t.tweet_id,\n            t.author_id,\n            t.created_at_str,\n            u.username as \"username?\",\n            ru.username as \"referenced_username?\",\n            rt.referenced_tweet_id as \"referenced_tweet_id?\",\n            rt.referenced_tweet_kind as \"referenced_tweet_kind?\"\n        FROM\n            news_referenced_tweet_url as rtu \n            JOIN news_tweet_url as tu ON tu.id = rtu.url_id\n            JOIN news_tweet as t ON t.tweet_id = rtu.tweet_id\n            JOIN news_feed_url as nfu ON nfu.url_id = rtu.url_id\n            LEFT JOIN news_twitter_user as u ON t.author_id = u.user_id\t\n            LEFT JOIN news_twitter_referenced_user as ru ON t.author_id = ru.user_id\n            LEFT JOIN news_referenced_tweet as rt ON t.tweet_id = rt.tweet_id\n        WHERE\n            nfu.url_slug = $1\n            AND tu.is_twitter_url = False\n            AND tu.title IS NOT NULL\n            AND t.in_reply_to_user_id IS NULL\n        "
   },
+  "48d4cdfdb8725a5ed8a49c6766b2cd1e3f442095303aa22932d6874edcc9bcfc": {
+    "describe": {
+      "columns": [
+        {
+          "name": "url_slug",
+          "ordinal": 0,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT url_slug\n            FROM news_feed_url\n            WHERE\n                created_at >= $1  \n                AND created_at < $2  \n                AND is_climate_related = True\n        "
+  },
   "4bf4151407d814c10d354a13f6a61d5f8e272b8207b3f892a959b285fdec3306": {
     "describe": {
       "columns": [

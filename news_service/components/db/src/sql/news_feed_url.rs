@@ -1,4 +1,4 @@
-use crate::models::news_feed_url::NewsFeedUrl;
+use crate::models::news_feed_url::{NewsFeedUrl, NewsFeedUrlSlug};
 use anyhow::Result;
 use sqlx::{postgres::PgQueryResult, PgPool};
 
@@ -142,6 +142,7 @@ pub async fn find_news_feed_url_by_url_slug(
 
     query.fetch_one(pool).await
 }
+
 pub async fn find_top_news_feed_urls_without_is_climate_related_set(
     pool: &PgPool,
 ) -> Result<Vec<NewsFeedUrl>, sqlx::Error> {
@@ -161,6 +162,29 @@ pub async fn find_top_news_feed_urls_without_is_climate_related_set(
 
     query.fetch_all(pool).await
 }
+
+pub async fn find_news_feed_url_slugs_within_date_range(
+    pool: &PgPool,
+    from_timestamp: i64,
+    to_timestamp: i64,
+) -> Result<Vec<NewsFeedUrlSlug>, sqlx::Error> {
+    let query = sqlx::query_as!(
+        NewsFeedUrlSlug,
+        r#"
+            SELECT url_slug
+            FROM news_feed_url
+            WHERE
+                created_at >= $1  
+                AND created_at < $2  
+                AND is_climate_related = True
+        "#,
+        from_timestamp,
+        to_timestamp
+    );
+
+    query.fetch_all(pool).await
+}
+
 
 pub async fn truncate_news_feed_url(pool: &PgPool) -> anyhow::Result<()> {
     sqlx::query("TRUNCATE news_feed_url RESTART IDENTITY")

@@ -15,3 +15,9 @@ pub struct NewsFeedUrl {
     pub tweeted_at: Option<i64>,
     pub tweeted_at_str: Option<String>,
 }
+
+// News feed URL - Url Slug only
+#[derive(FromRow, Deserialize, Serialize, Debug, Clone, async_graphql::SimpleObject)]
+pub struct NewsFeedUrlSlug {
+    pub url_slug: String,
+}
