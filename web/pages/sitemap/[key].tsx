@@ -34,13 +34,14 @@ function generateSiteMap(url_slugs: String[]): string {
 }
 
 export async function getServerSideProps(context: any) {
-  const { key } = context.query;
+  let { key } = context.query;
+  key = key.replace(".xml", "");
   let sitemap: Nullable<string> = null;
   if (key === "main") {
     sitemap = generateMainSiteMap();
   } else {
     // Example key: 12-2022.xml
-    const month_year = key.replace(".xml", "").split("-");
+    const month_year = key.split("-");
     const sdk = getSdk(graphQLClient);
     const response = await sdk.GetSitemapNewsFeedUrlSlugs({
       month: Number(month_year[0]),
