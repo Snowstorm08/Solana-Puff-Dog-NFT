@@ -16,9 +16,9 @@ function generateSiteMapIndex() {
         ${months
           .map((month) => {
             return `
-            <url>
+            <sitemap>
                 <loc>${BASE_DOMAIN_NAME}/sitemap/${month.month}-${month.year}.xml</loc>
-            </url>
+            </sitemap>
           `;
           })
           .join("")}        
