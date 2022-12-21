@@ -135,11 +135,19 @@ pub mod test_util {
             .unwrap();
     }
 
-    pub async fn create_fake_news_feed_url(db_pool: &PgPool, created_at_timestamp: i64) {
-        truncate_news_feed_url(db_pool).await.unwrap();
+    pub async fn create_fake_news_feed_url(
+        db_pool: &PgPool,
+        url_slug: String,
+        url_id: i32,
+        created_at_timestamp: i64,
+        truncate: bool,
+    ) {
+        if truncate {
+            truncate_news_feed_url(db_pool).await.unwrap();
+        }
         let news_feed_url = NewsFeedUrl {
-            url_slug: String::from("example-title"),
-            url_id: 1,
+            url_slug,
+            url_id: url_id,
             url_score: 90,
             num_references: 2,
             first_referenced_by: 1,

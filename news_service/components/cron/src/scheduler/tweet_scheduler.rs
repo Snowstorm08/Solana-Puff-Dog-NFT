@@ -7,13 +7,16 @@ use db::constants::{
 };
 use db::models::news_cron_job::{CronType, NewsCronJob};
 use db::queries::news_feed_url_query::NewsFeedUrlQuery;
+use db::queries::news_feed_url_references_query::NewsFeedUrlReferencesQuery;
 use db::sql::news_cron_job::{
     insert_news_cron_job, update_news_cron_job_completed_at, update_news_cron_job_error,
 };
 use db::sql::news_feed_url::update_news_feed_url_tweeted_at;
 use db::sql::news_feed_url_query::get_news_feed_urls;
+use db::sql::news_feed_url_references_query::get_news_feed_url_references;
 use db::util::convert::{datetime_to_str, now_utc_datetime};
 use db::util::db::init_db;
+use db::util::string::concat_string;
 use db::util::time::past_days;
 use log::{debug, error, info, warn};
 use sqlx::PgPool;
@@ -82,24 +85,37 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
                         news_feed_url
                     );
 
-                    let tweet_text = get_tweet_text(news_feed_url);
-                    if cfg!(debug_assertions) {
-                        debug!("tweet_text - {}", tweet_text);
-                    } else {
-                        // Only post tweets in release mode
-                        let api_user_ctx = get_api_user_ctx().await;
-                        post_tweet(&api_user_ctx, tweet_text).await?;
-                    }
+                    let news_feed_url_references_result =
+                        get_news_feed_url_references(db_pool, news_feed_url.url_slug.clone()).await;
 
-                    //Update tweeted_at value
-                    let now_utc_datetime = now_utc_datetime();
-                    update_news_feed_url_tweeted_at(
-                        db_pool,
-                        news_feed_url.url_id,
-                        now_utc_datetime.unix_timestamp(),
-                        datetime_to_str(now_utc_datetime),
-                    )
-                    .await?;
+                    if let Some(news_feed_url_references_list) = news_feed_url_references_result {
+                        // Sort by tweet created_at
+                        let mut news_feed_url_references_list = news_feed_url_references_list;
+                        news_feed_url_references_list
+                            .sort_by(|a, b| a.created_at.partial_cmp(&b.created_at).unwrap());
+
+                        let tweet_text =
+                            get_tweet_text(news_feed_url, &news_feed_url_references_list);
+                        if cfg!(debug_assertions) {
+                            debug!("tweet_text - {}", tweet_text);
+                        } else {
+                            // Only post tweets in release mode
+                            let api_user_ctx = get_api_user_ctx().await;
+                            post_tweet(&api_user_ctx, tweet_text).await?;
+                        }
+
+                        //Update tweeted_at value
+                        let now_utc_datetime = now_utc_datetime();
+                        update_news_feed_url_tweeted_at(
+                            db_pool,
+                            news_feed_url.url_id,
+                            now_utc_datetime.unix_timestamp(),
+                            datetime_to_str(now_utc_datetime),
+                        )
+                        .await?;
+                    } else {
+                        error!("news_feed_url_references not found");
+                    }
                 }
                 None => {
                     warn!("all news_feed_urls have been shared on Twitter");
@@ -114,7 +130,10 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
     Ok(())
 }
 
-pub fn get_tweet_text(news_feed_url: &NewsFeedUrlQuery) -> String {
+pub fn get_tweet_text(
+    news_feed_url: &NewsFeedUrlQuery,
+    news_feed_url_references: &Vec<NewsFeedUrlReferencesQuery>,
+) -> String {
     format!(
         r#"{}
 
@@ -126,21 +145,78 @@ Article link: {}
 #ClimateNews"#,
         news_feed_url.title,
         news_feed_url.url_slug,
-        tweet_shared_by_text(news_feed_url),
+        tweet_shared_by_text(news_feed_url_references),
         news_feed_url.expanded_url_parsed
     )
 }
 
 // TODO avoid duplicating this logic on web and backend
-pub fn tweet_shared_by_text(news_feed_url: &NewsFeedUrlQuery) -> String {
-    let shared_by_text = format!("Shared by @{}", news_feed_url.first_referenced_by_username);
-    let mut num_references_text = String::from("");
-    if news_feed_url.num_references > 2 {
-        num_references_text = format!("and {} others", news_feed_url.num_references - 1);
-    } else if news_feed_url.num_references == 2 {
-        num_references_text = format!("and 1 other");
+// Tweet shared by text
+// Examples:
+// 1  Shared by @user1
+// 2  Shared by @user1 and @user2
+// 3  Shared by @user1, @user2 and @user3
+// 3+ Shared by @user1, @user2, @user3 and 5 others
+pub fn tweet_shared_by_text(news_feed_url_references: &Vec<NewsFeedUrlReferencesQuery>) -> String {
+    let mut shared_by_text = String::from("");
+    for (i, news_feed_url_reference) in news_feed_url_references.iter().enumerate() {
+        match i {
+            0 => {
+                shared_by_text = concat_string(
+                    shared_by_text,
+                    format!(
+                        "Shared by @{}",
+                        news_feed_url_reference.username.as_ref().unwrap()
+                    ),
+                );
+            }
+            1 => {
+                let seperator = if news_feed_url_references.len() == 2 {
+                    String::from(" and @")
+                } else {
+                    String::from(", @")
+                };
+                shared_by_text = concat_string(
+                    shared_by_text,
+                    format!(
+                        "{}{}",
+                        seperator,
+                        news_feed_url_reference.username.as_ref().unwrap()
+                    ),
+                );
+            }
+            2 => {
+                let seperator = if news_feed_url_references.len() == 3 {
+                    String::from(" and @")
+                } else {
+                    String::from(", @")
+                };
+                let suffix = 
+                if news_feed_url_references.len() == 4 {
+                    String::from(" and 1 other")
+                }
+                else if news_feed_url_references.len() > 4 {
+                    format!(" and {} others", news_feed_url_references.len() - 3)
+                } else {
+                    String::from("")
+                };
+                shared_by_text = concat_string(
+                    shared_by_text,
+                    format!(
+                        "{}{}{}",
+                        seperator,
+                        news_feed_url_reference.username.as_ref().unwrap(),
+                        suffix
+                    ),
+                );
+            }
+            _ => {
+                break;
+            }
+        }
     }
-    format!("{} {}", shared_by_text, num_references_text)
+
+    shared_by_text
 }
 
 #[cfg(test)]
@@ -167,9 +243,98 @@ mod tests {
              preview_image_url: None,
         };
 
+        // Shared by 1 user
+        let mut news_feed_url_references_list = vec![NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 1,
+            author_id: 1,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user1")),
+            referenced_username: None,
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        }];
+
         assert_eq!(
-            get_tweet_text(&news_feed_url_query),
-            String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @climatenews_app and 1 other\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
-    );
+            get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+            String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+        );
+
+        // Shared by 2 users
+        news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 2,
+            author_id: 2,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user2")),
+            referenced_username: None,
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        });
+
+        assert_eq!(
+                    get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+                    String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1 and @user2\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+                );
+        // Shared by 3 users
+        news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 2,
+            author_id: 2,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user3")),
+            referenced_username: None,
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        });
+
+        assert_eq!(
+                    get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+                    String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1, @user2 and @user3\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+                );
+
+        // Shared by 4 users
+        news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 2,
+            author_id: 2,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user4")),
+            referenced_username: None,
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        });
+
+        assert_eq!(
+                    get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+                    String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1, @user2, @user3 and 1 other\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+                );
+
+        // Shared by 5 users
+        news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 2,
+            author_id: 2,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user5")),
+            referenced_username: None,
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        });
+
+        assert_eq!(
+                    get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+                    String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1, @user2, @user3 and 2 others\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+                );
     }
 }

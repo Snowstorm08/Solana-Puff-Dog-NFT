@@ -400,74 +400,6 @@
     },
     "query": "\n            SELECT url_slug, url_id, url_score, num_references, first_referenced_by, is_climate_related, created_at, created_at_str, tweeted_at, tweeted_at_str\n            FROM news_feed_url\n            WHERE url_id = $1;\n        "
   },
-  "3905d3649aa9e0037c99c0826f4c83df284692075555ab6b07c232e15291cde5": {
-    "describe": {
-      "columns": [
-        {
-          "name": "url_id",
-          "ordinal": 0,
-          "type_info": "Int4"
-        },
-        {
-          "name": "text",
-          "ordinal": 1,
-          "type_info": "Text"
-        },
-        {
-          "name": "tweet_id",
-          "ordinal": 2,
-          "type_info": "Int8"
-        },
-        {
-          "name": "author_id",
-          "ordinal": 3,
-          "type_info": "Int8"
-        },
-        {
-          "name": "created_at_str",
-          "ordinal": 4,
-          "type_info": "Text"
-        },
-        {
-          "name": "username?",
-          "ordinal": 5,
-          "type_info": "Text"
-        },
-        {
-          "name": "referenced_username?",
-          "ordinal": 6,
-          "type_info": "Text"
-        },
-        {
-          "name": "referenced_tweet_id?",
-          "ordinal": 7,
-          "type_info": "Int8"
-        },
-        {
-          "name": "referenced_tweet_kind?",
-          "ordinal": 8,
-          "type_info": "Text"
-        }
-      ],
-      "nullable": [
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false
-      ],
-      "parameters": {
-        "Left": [
-          "Text"
-        ]
-      }
-    },
-    "query": "\n        SELECT \n            rtu.url_id,\n            t.text,\n            t.tweet_id,\n            t.author_id,\n            t.created_at_str,\n            u.username as \"username?\",\n            ru.username as \"referenced_username?\",\n            rt.referenced_tweet_id as \"referenced_tweet_id?\",\n            rt.referenced_tweet_kind as \"referenced_tweet_kind?\"\n        FROM\n            news_referenced_tweet_url as rtu \n            JOIN news_tweet_url as tu ON tu.id = rtu.url_id\n            JOIN news_tweet as t ON t.tweet_id = rtu.tweet_id\n            JOIN news_feed_url as nfu ON nfu.url_id = rtu.url_id\n            LEFT JOIN news_twitter_user as u ON t.author_id = u.user_id\t\n            LEFT JOIN news_twitter_referenced_user as ru ON t.author_id = ru.user_id\n            LEFT JOIN news_referenced_tweet as rt ON t.tweet_id = rt.tweet_id\n        WHERE\n            nfu.url_slug = $1\n            AND tu.is_twitter_url = False\n            AND tu.title IS NOT NULL\n            AND t.in_reply_to_user_id IS NULL\n        "
-  },
   "48d4cdfdb8725a5ed8a49c6766b2cd1e3f442095303aa22932d6874edcc9bcfc": {
     "describe": {
       "columns": [
@@ -1702,6 +1634,80 @@
       }
     },
     "query": "\n        UPDATE news_feed_url \n        SET url_score = $1, num_references = $2\n        WHERE url_id = $3\n            "
+  },
+  "f46798c1b5dc48c1707a74db16277d21fd85a70ad46daab349c9291a062a372a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "url_id",
+          "ordinal": 0,
+          "type_info": "Int4"
+        },
+        {
+          "name": "text",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "tweet_id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "author_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        },
+        {
+          "name": "created_at",
+          "ordinal": 4,
+          "type_info": "Int8"
+        },
+        {
+          "name": "created_at_str",
+          "ordinal": 5,
+          "type_info": "Text"
+        },
+        {
+          "name": "username?",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "referenced_username?",
+          "ordinal": 7,
+          "type_info": "Text"
+        },
+        {
+          "name": "referenced_tweet_id?",
+          "ordinal": 8,
+          "type_info": "Int8"
+        },
+        {
+          "name": "referenced_tweet_kind?",
+          "ordinal": 9,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n        SELECT \n            rtu.url_id,\n            t.text,\n            t.tweet_id,\n            t.author_id,\n            t.created_at,\n            t.created_at_str,\n            u.username as \"username?\",\n            ru.username as \"referenced_username?\",\n            rt.referenced_tweet_id as \"referenced_tweet_id?\",\n            rt.referenced_tweet_kind as \"referenced_tweet_kind?\"\n        FROM\n            news_referenced_tweet_url as rtu \n            JOIN news_tweet_url as tu ON tu.id = rtu.url_id\n            JOIN news_tweet as t ON t.tweet_id = rtu.tweet_id\n            JOIN news_feed_url as nfu ON nfu.url_id = rtu.url_id\n            LEFT JOIN news_twitter_user as u ON t.author_id = u.user_id\t\n            LEFT JOIN news_twitter_referenced_user as ru ON t.author_id = ru.user_id\n            LEFT JOIN news_referenced_tweet as rt ON t.tweet_id = rt.tweet_id\n        WHERE\n            nfu.url_slug = $1\n            AND tu.is_twitter_url = False\n            AND tu.title IS NOT NULL\n            AND t.in_reply_to_user_id IS NULL\n        "
   },
   "f7ca358df9e7c6f595237445e3fc1b6cbbc21f7bf515e1c295075267307ea292": {
     "describe": {

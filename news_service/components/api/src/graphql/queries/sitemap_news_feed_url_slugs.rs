@@ -44,7 +44,14 @@ mod tests {
         let created_at_datetime = datetime!(2022 - 01 - 02  0:00).assume_utc();
         let created_at_timestamp = created_at_datetime.unix_timestamp();
 
-        create_fake_news_feed_url(&db_pool, created_at_timestamp).await;
+        create_fake_news_feed_url(
+            &db_pool,
+            String::from("example-title"),
+            1,
+            created_at_timestamp,
+            true,
+        )
+        .await;
 
         let schema = create_fake_schema(db_pool);
 

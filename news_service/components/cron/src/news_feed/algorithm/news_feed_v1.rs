@@ -77,7 +77,7 @@ async fn populate_news_feed_urls_v1(
         // Number of references/shares
         let num_references = tweet_info_vec.len() as i32;
 
-        let url_slug = create_news_feed_url_slug(db_pool, *url_id).await?;
+        let url_slug = create_news_feed_url_slug_str(db_pool, *url_id).await?;
 
         let news_feed_url_db = find_news_feed_url_by_url_id(db_pool, *url_id).await;
         if news_feed_url_db.is_none() && time_decayed_url_score > 0 {
@@ -111,16 +111,18 @@ async fn populate_news_feed_urls_v1(
 }
 
 // Create news feed url slug
-async fn create_news_feed_url_slug(db_pool: &PgPool, url_id: i32) -> Result<String> {
+async fn create_news_feed_url_slug_str(db_pool: &PgPool, url_id: i32) -> Result<String> {
     let news_tweet_url = find_news_tweet_url_by_id(db_pool, url_id).await?;
-    let mut url_slug = slugify(&news_tweet_url.title);
-    let mut count = 1u32;
+    let slugified_title = slugify(&news_tweet_url.title);
+    let start_num = 0u32;
+    let mut count = start_num;
+    let mut url_slug = slugified_title.clone();
     loop {
         let news_feed_url_db = find_news_feed_url_by_url_slug(db_pool, url_slug.clone()).await;
         if news_feed_url_db.is_ok() {
             // existing url_slug in use, try a new url_slug
-            url_slug = format!("{}-{}", url_slug, count);
             count += 1;
+            url_slug = format!("{}-{}", slugified_title.clone(), count);
         } else {
             // url_slug not in use;
             break;
@@ -175,7 +177,7 @@ mod tests {
     };
 
     #[tokio::test]
-    async fn create_news_feed_url_slug_test() {
+    async fn create_news_feed_url_slug_str_test() {
         init_env();
         let db_pool = init_test_db_pool().await.unwrap();
         truncate_news_feed_url(&db_pool).await.unwrap();
@@ -184,13 +186,33 @@ mod tests {
         create_fake_news_tweet_url(&db_pool, created_at_timestamp).await;
 
         // url_slug not in use
-        let url_slug_new = create_news_feed_url_slug(&db_pool, 1).await.unwrap();
+        let url_slug_new = create_news_feed_url_slug_str(&db_pool, 1).await.unwrap();
         assert_eq!(url_slug_new, String::from("example-title"));
 
-        create_fake_news_feed_url(&db_pool, created_at_timestamp).await;
+        create_fake_news_feed_url(
+            &db_pool,
+            String::from("example-title"),
+            1,
+            created_at_timestamp,
+            false,
+        )
+        .await;
 
         // url_slug in use
-        let url_slug_existing = create_news_feed_url_slug(&db_pool, 1).await.unwrap();
-        assert_eq!(url_slug_existing, String::from("example-title-1"));
+        let url_slug_existing1 = create_news_feed_url_slug_str(&db_pool, 1).await.unwrap();
+        assert_eq!(url_slug_existing1, String::from("example-title-1"));
+
+        create_fake_news_feed_url(
+            &db_pool,
+            String::from("example-title-1"),
+            2,
+            created_at_timestamp,
+            false,
+        )
+        .await;
+
+        // url_slug in use
+        let url_slug_existing2 = create_news_feed_url_slug_str(&db_pool, 1).await.unwrap();
+        assert_eq!(url_slug_existing2, String::from("example-title-2"));
     }
 }

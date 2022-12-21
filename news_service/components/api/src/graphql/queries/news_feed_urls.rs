@@ -36,7 +36,14 @@ mod tests {
         let db_pool = init_test_db_pool().await.unwrap();
         let created_at_timestamp = now_utc_timestamp();
         create_fake_news_tweet_url(&db_pool, created_at_timestamp).await;
-        create_fake_news_feed_url(&db_pool, created_at_timestamp).await;
+        create_fake_news_feed_url(
+            &db_pool,
+            String::from("example-title"),
+            1,
+            created_at_timestamp,
+            true,
+        )
+        .await;
         create_fake_news_twitter_user(&db_pool).await;
 
         let schema = create_fake_schema(db_pool);
