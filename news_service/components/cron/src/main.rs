@@ -2,7 +2,7 @@ use actix_web::{get, web, App, HttpResponse, HttpServer, Result};
 use db::init_env;
 use db::util::db::init_db;
 use scheduler::main_scheduler::start_main_scheduler;
-use scheduler::tweet_scheduler::start_tweet_scheduler;
+// use scheduler::tweet_scheduler::start_tweet_scheduler;
 use sqlx::Pool;
 use sqlx::Postgres;
 use std::env;
