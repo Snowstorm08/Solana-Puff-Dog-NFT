@@ -3,6 +3,12 @@
 - hosts: all
   become: true
   tasks:
+    - name: Update apt and install awscli
+      apt:
+        name: awscli
+        state: present
+        update_cache: false
+
     - name: Clone github repository
       git:
         repo: https://github.com/climatenews/services.git

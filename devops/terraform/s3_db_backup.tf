@@ -10,7 +10,7 @@ resource "aws_s3_bucket" "db_backup" {
 }
 
 resource "aws_s3_bucket_public_access_block" "db_backup_access" {
-  bucket                  = aws_s3_bucket.db-backup.id
+  bucket                  = aws_s3_bucket.db_backup.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
@@ -29,9 +29,13 @@ resource "aws_iam_policy" "db_backup_policy" {
         "Sid" : "VisualEditor0",
         "Effect" : "Allow",
         "Action" : [
-          "s3:PutObject"
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:ListBucket",
+          "s3:DeleteObject"
         ],
         "Resource" : [
+          "arn:aws:s3:::${var.db_backup_bucket}",
           "arn:aws:s3:::${var.db_backup_bucket}/*"
         ]
       }
@@ -67,7 +71,7 @@ resource "aws_iam_role_policy_attachment" "db_backup_policy_attachment" {
 # Instance Profile
 resource "aws_iam_instance_profile" "db_backup_iam_instance_profile" {
   name = var.db_backup_bucket_iam_instance_profile
-  role = aws_iam_role.some_role.name
+  role = aws_iam_role.db_backup_role.name
 }
 
 

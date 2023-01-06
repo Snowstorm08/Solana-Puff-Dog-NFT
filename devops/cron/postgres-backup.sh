@@ -6,6 +6,7 @@ CURRENT_DATE=$(date +%Y-%m-%d)
 CURRENT_DATETIME=$(date +%d-%b-%Y_%H_%M_%Z)
 BACKUPS_PATH=/backups
 DOCKER_SWARM_SERVICE_NAME=climate_news_stack_db
+S3_BACKUP_BUCKET=climate-news-db-backup
 
 ####################################
 #backup PostgreSQL database
@@ -24,6 +25,9 @@ postgres_container_id=$(docker service ps -f "name=$DOCKER_SWARM_SERVICE_NAME" $
 docker exec -t $DOCKER_SWARM_SERVICE_NAME.1."$postgres_container_id" pg_dump -U $POSTGRES_USER $POSTGRES_DB > 'dump_'"$POSTGRES_DB"'.sql'
 tar -cf - 'dump_'"$POSTGRES_DB"'.sql' | gzip -9 > "$db_backup_filename"
 rm 'dump_'"$POSTGRES_DB"'.sql'
+
+# Move file to S3 bucket
+aws s3 cp "$BACKUP_FOLDER/$db_backup_filename s3://$S3_BACKUP_BUCKET$BACKUP_FOLDER/$db_backup_filename"
 
 cd "$BACKUP_FOLDER"
 md5sum * > MD5SUMS
