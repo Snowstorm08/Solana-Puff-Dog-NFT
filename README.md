@@ -75,6 +75,6 @@ docker stack rm climate_news_stack
 # Triggering a new Docker image build
 ```bash
 
-git tag -a v0.0.34 -m "enabling tweet scheduler" && git push origin v0.0.34
+git tag -a v0.0.35 -m "www updates" && git push origin v0.0.35
 
 ```

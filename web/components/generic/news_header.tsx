@@ -18,7 +18,7 @@ export default function NewsHeader(props: NewsHeaderProps) {
           )}
 
           {props.subtitle ? (
-            <p className="text-sm font-normal text-gray-700 mt-1">
+            <p className="text-sm font-normal text-gray-900 mt-1">
               {props.subtitle}
             </p>
           ) : (
