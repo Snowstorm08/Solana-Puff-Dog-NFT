@@ -125,7 +125,7 @@ export default function NavBar(props: NavBarProps) {
                   isCurrentRoute(props.pageRoute, item.href)
                     ? "border-b border-gray-400"
                     : "",
-                  "text-3xl font-bold my-8"
+                  "text-4xl font-bold my-8"
                 )}
               >
                 <Link href={item.href}>{item.name}</Link>

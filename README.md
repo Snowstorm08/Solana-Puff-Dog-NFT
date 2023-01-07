@@ -75,6 +75,6 @@ docker stack rm climate_news_stack
 # Triggering a new Docker image build
 ```bash
 
-git tag -a v0.0.36 -m "bug fix" && git push origin v0.0.36
+git tag -a v0.0.37 -m "ui fixes" && git push origin v0.0.37
 
 ```
