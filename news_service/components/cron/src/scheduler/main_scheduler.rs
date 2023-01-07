@@ -3,13 +3,13 @@ use crate::news_feed::user_tweets::get_all_user_tweets;
 use crate::slack::send_main_cron_message;
 use crate::twitter::init_twitter_api;
 use anyhow::Result;
-use chrono::Local;
 use db::models::news_cron_job::{CronType, NewsCronJob};
 use db::sql::news_cron_job::{
     insert_news_cron_job, update_news_cron_job_completed_at, update_news_cron_job_error,
 };
 use db::util::convert::{datetime_to_str, now_utc_datetime};
 use db::util::db::init_db;
+use db::util::time::now_formated;
 use log::{error, info};
 use sqlx::PgPool;
 use tokio::time::{sleep, Duration};
@@ -18,10 +18,10 @@ pub async fn start_main_scheduler() {
     let db_pool = init_db().await;
     loop {
         // cron job continuous loop
-        send_main_cron_message(format!("main_cron_job started - {:?}", Local::now()));
+        send_main_cron_message(format!("main_cron_job started - {:?}", now_formated()));
         match start_main_cron_job(&db_pool).await {
             Ok(_) => {
-                send_main_cron_message(format!("main_cron_job ended - {:?}", Local::now()));
+                send_main_cron_message(format!("main_cron_job ended - {:?}", now_formated()));
             }
             Err(err) => {
                 error!("main_cron_job failed: {:?}", err);
@@ -65,7 +65,7 @@ pub async fn start_main_cron_job(db_pool: &PgPool) -> anyhow::Result<()> {
 }
 
 pub async fn main_cron_job(db_pool: &PgPool) -> Result<()> {
-    info!("main_cron_job started - {:?}", Local::now());
+    info!("main_cron_job started - {:?}", now_formated());
     let twitter_api = init_twitter_api();
     get_all_user_tweets(db_pool, &twitter_api).await?;
     populate_news_feed_v1(db_pool).await?;

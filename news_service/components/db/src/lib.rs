@@ -39,7 +39,7 @@ pub async fn init_db_pool() -> anyhow::Result<PgPool> {
         .await?;
 
     // Auto-migrate db
-    if let Err(err) = sqlx::migrate!("./migrations").run(&db_pool).await{
+    if let Err(err) = sqlx::migrate!("./migrations").run(&db_pool).await {
         error!("sqlx::migrate error: {}", err);
     };
     Ok(db_pool)

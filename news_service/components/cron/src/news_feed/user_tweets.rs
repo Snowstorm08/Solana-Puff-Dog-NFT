@@ -23,6 +23,7 @@ use db::sql::news_user_referenced_tweet_query::get_news_user_referenced_tweet_qu
 use db::util::convert::now_utc_timestamp;
 use db::util::time::datetime_hours_diff;
 use db::util::time::datetime_minutes_diff;
+use db::util::time::now_formated;
 use log::error;
 use log::info;
 use sqlx::PgPool;
@@ -35,11 +36,11 @@ pub async fn get_all_user_tweets(
     db_pool: &PgPool,
     twitter_api: &TwitterApi<BearerToken>,
 ) -> Result<()> {
-    info!("get_all_user_tweets - {:?}", Local::now());
+    info!("get_all_user_tweets - {:?}", now_formated());
     fetch_users(db_pool, twitter_api).await?;
     fetch_user_tweets(db_pool, twitter_api).await?;
     update_news_twitter_users_scores(db_pool).await?;
-    info!("get_all_user_tweets complete - {:?}", Local::now());
+    info!("get_all_user_tweets complete - {:?}", now_formated());
     Ok(())
 }
 
@@ -117,7 +118,7 @@ async fn get_user_tweets_and_references(
 }
 
 async fn update_news_twitter_users_scores(db_pool: &PgPool) -> Result<()> {
-    info!("update_news_twitter_users_scores - {:?}", Local::now());
+    info!("update_news_twitter_users_scores - {:?}", now_formated());
     let news_twitter_users = find_all_news_twitter_users(db_pool).await?;
 
     for news_twitter_user in news_twitter_users {

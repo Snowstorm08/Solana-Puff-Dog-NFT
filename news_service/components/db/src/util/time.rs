@@ -3,10 +3,17 @@ use super::convert::now_utc_datetime;
 use anyhow::bail;
 use anyhow::Result;
 use time::ext::NumericalDuration;
-use time::Date;
-use time::Duration;
-use time::Month;
-use time::OffsetDateTime;
+use time::{format_description, Date, Duration, Month, OffsetDateTime};
+
+pub fn now_formated() -> String {
+    match format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]") {
+        Ok(format) => match now_utc_datetime().format(&format) {
+            Ok(datetime) => datetime,
+            Err(_) => String::from("error"),
+        },
+        Err(_) => String::from("error"),
+    }
+}
 
 pub fn datetime_minutes_diff(date_timestamp: i64) -> i64 {
     let date = datetime_from_unix_timestamp(date_timestamp);
