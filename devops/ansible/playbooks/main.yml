@@ -44,6 +44,7 @@
      
 
 # TODO
+# make a /oauth dir
 ## create swarm
 # sudo docker swarm init
 # copy .env.dev file

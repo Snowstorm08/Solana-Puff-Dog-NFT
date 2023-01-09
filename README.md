@@ -39,36 +39,39 @@ docker-compose logs --tail="all" -f
 ### Deploy the stack with Docker Swarm
 ```bash
 # Initialize a docker swarm
-docker swarm init 
+sudo docker swarm init 
 
 # Deploy the stack
-env $(cat .env.dev | xargs) docker stack deploy --compose-file docker-compose.yaml climate_news_stack 
+sudo env $(cat .env.dev | xargs) docker stack deploy --compose-file docker-compose.yaml climate_news_stack 
 
 # Display stack info
-docker stack ps climate_news_stack
+sudo docker stack ps climate_news_stack
 
 # Display service info
-docker service ps climate_news_stack_news_cron
+sudo docker service ps climate_news_stack_news_cron
 
 # Inspect a service
-docker service inspect --pretty climate_news_stack_news_cron
+sudo docker service inspect --pretty climate_news_stack_news_cron
 
 # Restart a service
-docker service update --force climate_news_stack_news_cron
+sudo docker service update --force climate_news_stack_news_cron
 
 # Run a command in a container
-docker container ls
-docker exec -it f855a1118d35 /bin/bash
+sudo docker container ls
+sudo docker exec -it f855a1118d35 /bin/bash
 
 # Logs for a service
-docker service logs -f --since 1h climate_news_stack_db
-docker service logs -f --since 1h climate_news_stack_news_api
-docker service logs -f --since 1h climate_news_stack_news_cron
-docker service logs -f --since 1h climate_news_stack_web
-docker service logs -f --since 1h climate_news_stack_caddy
+sudo docker service logs -f --since 1h climate_news_stack_db
+sudo docker service logs -f --since 1h climate_news_stack_news_api
+sudo docker service logs -f --since 1h climate_news_stack_news_cron
+sudo docker service logs -f --since 1h climate_news_stack_web
+sudo docker service logs -f --since 1h climate_news_stack_caddy
+
+# Search logs for a service
+sudo docker service logs climate_news_stack_news_cron 2>&1 | grep "tweet" 
 
 # Remove the stack
-docker stack rm climate_news_stack
+sudo docker stack rm climate_news_stack
 
 ```
 
