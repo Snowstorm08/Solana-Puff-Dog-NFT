@@ -26,7 +26,6 @@ pub fn init_env() {
 
 pub async fn init_db_pool() -> anyhow::Result<PgPool> {
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL is not set");
-    println!("{}", database_url);
     let mut connection_options = PgConnectOptions::from_str(&database_url)?;
     connection_options
         .disable_statement_logging()
