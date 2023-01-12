@@ -34,6 +34,7 @@ fn send_message(webhook_url: String, channel: String, message: String) {
     if cfg!(debug_assertions) {
         info!("{}", message);
     } else {
+        info!("{}", message);
         match Slack::new(webhook_url.as_str()) {
             Ok(slack) => {
                 let payload = PayloadBuilder::new()

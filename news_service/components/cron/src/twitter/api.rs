@@ -118,7 +118,7 @@ pub async fn get_user_tweets(
 ) -> Result<Vec<Tweet>> {
     let start_time = lookup_period();
 
-    info!("Twitter API - get_user_tweets: {}", user_id);
+    //info!("Twitter API - get_user_tweets: {}", user_id);
     let mut tweets: Vec<Tweet> = vec![];
     let tweets_api_response = if let Some(last_tweet_id) = last_tweet_id {
         // Use last_tweet_id
