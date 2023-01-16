@@ -9,7 +9,7 @@ pub mod queries;
 pub struct Query;
 
 // Schema
-pub type ClimateActionSchema = Schema<Query, EmptyMutation, EmptySubscription>;
+pub type ClimateNewsSchema = Schema<Query, EmptyMutation, EmptySubscription>;
 
 pub fn init_graphql_schema(db_pool: PgPool) -> Schema<Query, EmptyMutation, EmptySubscription> {
     let schema = Schema::build(Query, EmptyMutation, EmptySubscription)
@@ -29,7 +29,7 @@ pub mod test_util {
     pub fn create_fake_schema(
         db_pool: PgPool,
     ) -> async_graphql::Schema<Query, EmptyMutation, EmptySubscription> {
-        ClimateActionSchema::build(Query, EmptyMutation, EmptySubscription)
+        ClimateNewsSchema::build(Query, EmptyMutation, EmptySubscription)
             .data(db_pool)
             .finish()
     }

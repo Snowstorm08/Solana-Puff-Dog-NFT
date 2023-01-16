@@ -1,4 +1,4 @@
-use crate::graphql::{init_graphql_schema, ClimateActionSchema};
+use crate::graphql::{init_graphql_schema, ClimateNewsSchema};
 use actix_cors::Cors;
 use actix_web::{get, guard, web, web::Data, App, HttpResponse, HttpServer, Result};
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
@@ -11,7 +11,7 @@ pub mod graphql;
 
 pub const N_WORKERS: usize = 4;
 
-async fn index(schema: web::Data<ClimateActionSchema>, req: GraphQLRequest) -> GraphQLResponse {
+async fn index(schema: web::Data<ClimateNewsSchema>, req: GraphQLRequest) -> GraphQLResponse {
     schema.execute(req.into_inner()).await.into()
 }
 

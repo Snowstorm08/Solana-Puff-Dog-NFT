@@ -184,10 +184,10 @@ pub async fn get_tweets_with_users(
     twitter_api: &TwitterApi<BearerToken>,
     tweet_ids: Vec<NumericId>,
 ) -> Result<TweetsWithUsers> {
-    info!(
-        "Twitter API - get_tweets_with_users - num_tweet_ids: {:?} ",
-        tweet_ids.len()
-    );
+    // info!(
+    //     "Twitter API - get_tweets_with_users - num_tweet_ids: {:?} ",
+    //     tweet_ids.len()
+    // );
     let tweets_response = twitter_api
         .get_tweets(tweet_ids)
         .tweet_fields(TWEET_FIELDS)

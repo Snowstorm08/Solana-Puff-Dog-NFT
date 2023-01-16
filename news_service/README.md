@@ -32,6 +32,7 @@ cargo install sqlx-cli
 
 # create database & run migrations
 cd components/db
+createuser --superuser climate_news
 sqlx database create --database-url postgres://climate_news:climate_news@localhost:5432/climate_news
 sqlx migrate run --database-url postgres://climate_news:climate_news@localhost:5432/climate_news
 sqlx migrate revert --database-url postgres://climate_news:climate_news@localhost:5432/climate_news

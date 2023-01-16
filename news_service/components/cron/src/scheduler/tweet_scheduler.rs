@@ -26,12 +26,13 @@ use tokio_schedule::{every, Job};
 pub async fn start_tweet_scheduler() {
     let db_pool = init_db().await;
     let tweet_scheduler = every(2).hours().in_timezone(&Utc).perform(|| async {
+        send_tweet_cron_message(format!("tweet_cron_job started - {:?}", now_formated()));
         match start_tweet_cron_job(&db_pool).await {
             Ok(_) => {
                 send_tweet_cron_message(format!("tweet_cron_job ended - {:?}", now_formated()));
             }
             Err(err) => {
-                error!("tweet_cron_job failed: {:?}", err);
+                send_tweet_cron_message(format!("tweet_cron_job #1 failed: {:?}", err));
             }
         }
     });
@@ -63,7 +64,7 @@ pub async fn start_tweet_cron_job(db_pool: &PgPool) -> anyhow::Result<()> {
         }
         Err(err) => {
             update_news_cron_job_error(&db_pool, news_cron_job_db.id, err.to_string()).await?;
-            send_tweet_cron_message(format!("tweet_cron_job failed: {:?}", err));
+            send_tweet_cron_message(format!("tweet_cron_job #2 failed: {:?}", err));
         }
     }
     Ok(())
