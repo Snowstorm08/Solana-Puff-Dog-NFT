@@ -1,5 +1,4 @@
-use super::convert::datetime_from_unix_timestamp;
-use super::convert::now_utc_datetime;
+use super::convert::{datetime_from_unix_timestamp, now_local_datetime, now_utc_datetime};
 use anyhow::bail;
 use anyhow::Result;
 use time::ext::NumericalDuration;
@@ -7,7 +6,7 @@ use time::{format_description, Date, Duration, Month, OffsetDateTime};
 
 pub fn now_formated() -> String {
     match format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]") {
-        Ok(format) => match now_utc_datetime().format(&format) {
+        Ok(format) => match now_local_datetime().format(&format) {
             Ok(datetime) => datetime,
             Err(_) => String::from("error"),
         },

@@ -29,7 +29,9 @@ rm 'dump_'"$POSTGRES_DB"'.sql'
 echo 'Uploading PostgreSQL backup to S3 bucket'
 aws s3 cp $BACKUP_FOLDER/$db_backup_filename s3://$S3_BACKUP_BUCKET$BACKUP_FOLDER
 
+echo 'removing backup'
+rm $BACKUP_FOLDER/$db_backup_filename
+
 cd "$BACKUP_FOLDER"
-md5sum * > MD5SUMS
 
 echo 'Done. '

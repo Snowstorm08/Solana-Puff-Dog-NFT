@@ -35,5 +35,3 @@ pub async fn get_news_user_referenced_tweet_query(
     .fetch_all(pool)
     .await
 }
-
-

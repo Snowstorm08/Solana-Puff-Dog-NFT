@@ -45,7 +45,7 @@ pub async fn get_list_members(
 
     parse_error_response(&list_users_response).await?;
 
-    let list_users_response = list_users_response.unwrap();
+    let list_users_response = list_users_response?;
 
     if let Some(new_list_users) = list_users_response.clone().into_data() {
         list_users = [list_users, new_list_users].concat();
@@ -93,8 +93,9 @@ pub async fn get_users_by_author_id(
             .await;
 
         parse_error_response(&users_response).await?;
-        let users = users_response.unwrap().into_data().unwrap();
-        user_vec = [user_vec, users].concat();
+        if let Some(users) = users_response?.into_data() {
+            user_vec = [user_vec, users].concat();
+        }
     }
 
     Ok(user_vec)

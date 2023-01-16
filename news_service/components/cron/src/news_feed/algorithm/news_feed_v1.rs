@@ -48,7 +48,7 @@ async fn populate_news_feed_urls_v1(
     url_to_tweet_map: HashMap<i32, Vec<TweetInfo>>,
 ) -> Result<()> {
     // Reset news feed URL scores
-    reset_news_feed_url_url_scores(db_pool).await.unwrap();
+    reset_news_feed_url_url_scores(db_pool).await?;
     // URLS with shared by author count + score
     for url_id in url_to_tweet_map.keys() {
         let tweet_info_vec = url_to_tweet_map.get(url_id).unwrap();

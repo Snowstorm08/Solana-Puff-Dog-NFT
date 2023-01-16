@@ -1,7 +1,11 @@
-use time::OffsetDateTime;
+use time::{macros::offset, OffsetDateTime};
 
 pub fn now_utc_datetime() -> OffsetDateTime {
     OffsetDateTime::now_utc()
+}
+
+pub fn now_local_datetime() -> OffsetDateTime {
+    OffsetDateTime::now_utc().to_offset(offset!(-8))
 }
 
 pub fn now_utc_timestamp() -> i64 {

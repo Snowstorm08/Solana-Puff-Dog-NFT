@@ -79,6 +79,6 @@ sudo docker volume prune
 # Triggering a new Docker image build
 ```bash
 
-git tag -a v0.0.45 -m "news_tweet_author_id_index" && git push origin v0.0.45
+git tag -a v0.0.46 -m "bug fixes" && git push origin v0.0.46
 
 ```

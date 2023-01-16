@@ -107,7 +107,7 @@ pub async fn parse_and_insert_tweet(
             insert_news_tweet(db_pool, news_tweet).await?;
         }
     }
-    parse_tweet_urls(db_pool, tweet, english_language_detector).await;
+    parse_tweet_urls(db_pool, tweet, english_language_detector).await?;
     Ok(())
 }
 
@@ -129,12 +129,12 @@ pub async fn parse_tweet_urls(
     db_pool: &PgPool,
     tweet: &Tweet,
     english_language_detector: &EnglishLanguageDetector,
-) {
+) -> Result<()> {
     let tweet_id = numeric_id_to_i64(tweet.id);
     if let Some(entities) = tweet.entities.clone() {
         if let Some(urls) = entities.urls {
             for url in urls {
-                let expanded_url = Url::parse(&url.expanded_url).unwrap();
+                let expanded_url = Url::parse(&url.expanded_url)?;
                 let expanded_url_parsed = get_expanded_url_parsed(expanded_url.clone());
                 let news_tweet_url_db_result = find_news_tweet_url_by_expanded_url_parsed(
                     db_pool,
@@ -165,6 +165,7 @@ pub async fn parse_tweet_urls(
             }
         }
     }
+    Ok(())
 }
 
 pub async fn parse_and_insert_tweet_url(
@@ -177,39 +178,41 @@ pub async fn parse_and_insert_tweet_url(
 ) {
     let tweet_id = numeric_id_to_i64(tweet.id);
     if let Some(created_at) = tweet.created_at {
-        let expanded_url_host = expanded_url.host_str().unwrap();
-        // Remove www prefix from host
-        let expanded_url_host = str::replace(expanded_url_host, "www.", "");
-        let is_twitter_url = url.expanded_url.starts_with("https://twitter.com")
-            || url.expanded_url.starts_with("https://mobile.twitter.com");
+        if let Some(expanded_url_host) = expanded_url.host_str() {
+            // Remove www prefix from host
+            let expanded_url_host = str::replace(expanded_url_host, "www.", "");
+            let is_twitter_url = url.expanded_url.starts_with("https://twitter.com")
+                || url.expanded_url.starts_with("https://mobile.twitter.com");
 
-        if let (Some(title), Some(description)) = (url.title.clone(), url.description.clone()) {
-            let title_and_description = format!("{} - {}", title, description);
-            let is_english = english_language_detector.is_english_language(&title_and_description);
-            let (preview_image_thumbnail_url, preview_image_url) =
-                parse_tweet_url_images(url.images);
+            if let (Some(title), Some(description)) = (url.title.clone(), url.description.clone()) {
+                let title_and_description = format!("{} - {}", title, description);
+                let is_english =
+                    english_language_detector.is_english_language(&title_and_description);
+                let (preview_image_thumbnail_url, preview_image_url) =
+                    parse_tweet_url_images(url.images);
 
-            let news_tweet_url = NewsTweetUrl {
-                url: url.url,
-                expanded_url: url.expanded_url,
-                expanded_url_parsed,
-                expanded_url_host,
-                display_url: url.display_url,
-                is_twitter_url,
-                is_english,
-                title,
-                description,
-                preview_image_thumbnail_url,
-                preview_image_url,
-                created_at: created_at.unix_timestamp(),
-                created_at_str: datetime_to_str(created_at),
-            };
+                let news_tweet_url = NewsTweetUrl {
+                    url: url.url,
+                    expanded_url: url.expanded_url,
+                    expanded_url_parsed,
+                    expanded_url_host,
+                    display_url: url.display_url,
+                    is_twitter_url,
+                    is_english,
+                    title,
+                    description,
+                    preview_image_thumbnail_url,
+                    preview_image_url,
+                    created_at: created_at.unix_timestamp(),
+                    created_at_str: datetime_to_str(created_at),
+                };
 
-            let news_tweet_url_db = insert_news_tweet_url(db_pool, news_tweet_url)
-                .await
-                .unwrap();
-            parse_and_insert_news_referenced_tweet_url(db_pool, tweet_id, news_tweet_url_db.id)
-                .await;
+                let news_tweet_url_db = insert_news_tweet_url(db_pool, news_tweet_url)
+                    .await
+                    .unwrap();
+                parse_and_insert_news_referenced_tweet_url(db_pool, tweet_id, news_tweet_url_db.id)
+                    .await;
+            }
         }
     }
 }
