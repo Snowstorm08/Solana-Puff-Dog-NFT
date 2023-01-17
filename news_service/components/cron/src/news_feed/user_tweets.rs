@@ -81,12 +81,12 @@ async fn fetch_user_tweets(db_pool: &PgPool, twitter_api: &TwitterApi<BearerToke
         news_twitter_users.len()
     );
     for (i, news_twitter_user) in news_twitter_users.iter().enumerate() {
-        // if i % 10 == 0 {
-        info!(
-            "({}) Updating tweets for: {}",
-            i, news_twitter_user.username
-        );
-        // }
+        if i % 10 == 0 {
+            info!(
+                "({}) Updating tweets for: {}",
+                i, news_twitter_user.username
+            );
+        }
 
         // Check if user last_checked is over 30 mins or has no recent tweets
         if let Err(err) = get_user_tweets_and_references(

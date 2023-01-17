@@ -19,6 +19,7 @@ use db::util::convert::{datetime_to_str, now_utc_datetime};
 use db::util::db::init_db_result;
 use db::util::string::concat_string;
 use db::util::time::{now_formated, past_days};
+use itertools::Itertools;
 use log::{debug, error, info, warn};
 use sqlx::PgPool;
 use tokio_schedule::{every, Job};
@@ -181,62 +182,43 @@ Article link: {}
 // 3+ Shared by @user1, @user2, @user3 and 5 others
 pub fn tweet_shared_by_text(news_feed_url_references: &Vec<NewsFeedUrlReferencesQuery>) -> String {
     let mut shared_by_text = String::from("");
-    for (i, news_feed_url_reference) in news_feed_url_references.iter().enumerate() {
+
+    let unique_referenced_usernames = get_unique_referenced_usernames(news_feed_url_references);
+    for (i, referenced_username) in unique_referenced_usernames.iter().enumerate() {
         match i {
             0 => {
                 shared_by_text = concat_string(
                     shared_by_text,
-                    format!(
-                        "Shared by @{}",
-                        news_feed_url_reference
-                            .referenced_username
-                            .as_ref()
-                            .unwrap()
-                    ),
+                    format!("Shared by @{}", referenced_username),
                 );
             }
             1 => {
-                let seperator = if news_feed_url_references.len() == 2 {
+                let seperator = if unique_referenced_usernames.len() == 2 {
                     String::from(" and @")
                 } else {
                     String::from(", @")
                 };
                 shared_by_text = concat_string(
                     shared_by_text,
-                    format!(
-                        "{}{}",
-                        seperator,
-                        news_feed_url_reference
-                            .referenced_username
-                            .as_ref()
-                            .unwrap()
-                    ),
+                    format!("{}{}", seperator, referenced_username),
                 );
             }
             2 => {
-                let seperator = if news_feed_url_references.len() == 3 {
+                let seperator = if unique_referenced_usernames.len() == 3 {
                     String::from(" and @")
                 } else {
                     String::from(", @")
                 };
-                let suffix = if news_feed_url_references.len() == 4 {
+                let suffix = if unique_referenced_usernames.len() == 4 {
                     String::from(" and 1 other")
-                } else if news_feed_url_references.len() > 4 {
-                    format!(" and {} others", news_feed_url_references.len() - 3)
+                } else if unique_referenced_usernames.len() > 4 {
+                    format!(" and {} others", unique_referenced_usernames.len() - 3)
                 } else {
                     String::from("")
                 };
                 shared_by_text = concat_string(
                     shared_by_text,
-                    format!(
-                        "{}{}{}",
-                        seperator,
-                        news_feed_url_reference
-                            .referenced_username
-                            .as_ref()
-                            .unwrap(),
-                        suffix
-                    ),
+                    format!("{}{}{}", seperator, referenced_username, suffix),
                 );
             }
             _ => {
@@ -248,10 +230,47 @@ pub fn tweet_shared_by_text(news_feed_url_references: &Vec<NewsFeedUrlReferences
     shared_by_text
 }
 
+fn get_unique_referenced_usernames(
+    news_feed_url_references: &Vec<NewsFeedUrlReferencesQuery>,
+) -> Vec<String> {
+    news_feed_url_references
+        .iter()
+        .map(|nfur| nfur.referenced_username.clone())
+        .filter_map(|referenced_username| referenced_username)
+        .unique()
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
 
     use super::*;
+
+    #[derive(Debug, PartialEq)]
+    pub struct TestStruct {
+        pub name: Option<String>,
+    }
+
+    #[test]
+    fn test_unique_struct_values() {
+        // Test to ensure a list of unique names can be extracted from a vec of structs
+        let data = vec![
+            TestStruct {
+                name: Some(String::from("a")),
+            },
+            TestStruct {
+                name: Some(String::from("a")),
+            },
+        ];
+
+        let unique_names: Vec<String> = data
+            .iter()
+            .map(|t| t.name.clone())
+            .filter_map(|name| name)
+            .unique()
+            .collect();
+        assert_eq!(unique_names, vec![String::from("a")]);
+    }
 
     #[test]
     fn test_get_tweet_text() {
@@ -281,7 +300,7 @@ mod tests {
             created_at: 0,
             created_at_str: String::from(""),
             username: Some(String::from("user1")),
-            referenced_username: None,
+            referenced_username: Some(String::from("user1")),
             referenced_tweet_id: None,
             referenced_tweet_kind: None,
         }];
@@ -300,7 +319,7 @@ mod tests {
             created_at: 0,
             created_at_str: String::from(""),
             username: Some(String::from("user2")),
-            referenced_username: None,
+            referenced_username: Some(String::from("user2")),
             referenced_tweet_id: None,
             referenced_tweet_kind: None,
         });
@@ -318,7 +337,7 @@ mod tests {
             created_at: 0,
             created_at_str: String::from(""),
             username: Some(String::from("user3")),
-            referenced_username: None,
+            referenced_username: Some(String::from("user3")),
             referenced_tweet_id: None,
             referenced_tweet_kind: None,
         });
@@ -337,7 +356,7 @@ mod tests {
             created_at: 0,
             created_at_str: String::from(""),
             username: Some(String::from("user4")),
-            referenced_username: None,
+            referenced_username: Some(String::from("user4")),
             referenced_tweet_id: None,
             referenced_tweet_kind: None,
         });
@@ -356,11 +375,42 @@ mod tests {
             created_at: 0,
             created_at_str: String::from(""),
             username: Some(String::from("user5")),
-            referenced_username: None,
+            referenced_username: Some(String::from("user5")),
             referenced_tweet_id: None,
             referenced_tweet_kind: None,
         });
 
+        assert_eq!(
+                    get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
+                    String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1, @user2, @user3 and 2 others\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
+                );
+
+        // Shared by 5 users with duplicate username
+        news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
+            url_id: 1,
+            text: String::from("Example Title"),
+            tweet_id: 2,
+            author_id: 2,
+            created_at: 0,
+            created_at_str: String::from(""),
+            username: Some(String::from("user5")),
+            referenced_username: Some(String::from("user5")),
+            referenced_tweet_id: None,
+            referenced_tweet_kind: None,
+        });
+
+        let unique_referenced_usernames =
+            get_unique_referenced_usernames(&news_feed_url_references_list);
+        assert_eq!(
+            unique_referenced_usernames,
+            vec![
+                String::from("user1"),
+                String::from("user2"),
+                String::from("user3"),
+                String::from("user4"),
+                String::from("user5")
+            ]
+        );
         assert_eq!(
                     get_tweet_text(&news_feed_url_query, &news_feed_url_references_list),
                     String::from("Example Title\n\nMore info: https://climatenews.app/news_feed/example-slug\n\nShared by @user1, @user2, @user3 and 2 others\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve\n#ClimateNews")
