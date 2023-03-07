@@ -5,7 +5,7 @@ use anyhow::Result;
 use chrono::Utc;
 use db::constants::{
     MAX_TWEET_CHARACTER_COUNT, NEWS_FEED_MIN_NUM_SHARES_BEFORE_TWEETING, NEWS_FEED_URLS_LIMIT,
-    NEWS_FEED_URLS_NUM_DAYS,
+    NEWS_FEED_URLS_NUM_DAYS, TWEET_TEXT_LENGTH,
 };
 use db::models::news_cron_job::{CronType, NewsCronJob};
 use db::queries::news_feed_url_query::NewsFeedUrlQuery;
@@ -118,11 +118,15 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
                         news_feed_url_references_list
                             .sort_by(|a, b| a.created_at.partial_cmp(&b.created_at).unwrap());
 
-                        let mut tweet_text =
-                            get_tweet_text_long(news_feed_url, &news_feed_url_references_list);
-                        if tweet_text.len() > MAX_TWEET_CHARACTER_COUNT {
-                            tweet_text = get_tweet_text_short(news_feed_url);
-                        }
+                        let tweet_text: String = if get_tweet_text_long_len(
+                            news_feed_url,
+                            &news_feed_url_references_list,
+                        ) <= MAX_TWEET_CHARACTER_COUNT
+                        {
+                            get_tweet_text_long(news_feed_url, &news_feed_url_references_list)
+                        } else {
+                            get_tweet_text_short(news_feed_url)
+                        };
                         if cfg!(debug_assertions) {
                             debug!("tweet_text - {}", tweet_text);
                         } else {
@@ -155,6 +159,25 @@ pub async fn tweet_cron_job(db_pool: &PgPool) -> Result<()> {
     }
 
     Ok(())
+}
+
+//A URL of any length will be altered to 23 characters
+pub fn get_tweet_text_long_len(
+    news_feed_url: &NewsFeedUrlQuery,
+    news_feed_url_references: &Vec<NewsFeedUrlReferencesQuery>,
+) -> usize {
+    let tweet_text = format!(
+        r#"{}
+
+Tweets:
+
+{}
+
+Article link: "#,
+        news_feed_url.title,
+        tweet_shared_by_text(news_feed_url_references),
+    );
+    tweet_text.len() + (TWEET_TEXT_LENGTH * 2)
 }
 
 pub fn get_tweet_text_long(
@@ -324,6 +347,11 @@ mod tests {
             String::from("Example Title\n\nTweets: https://climatenews.app/news_feed/example-slug\n\nShared by @user1\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve")
         );
 
+        assert_eq!(
+            get_tweet_text_long_len(&news_feed_url_query, &news_feed_url_references_list),
+            102
+        );
+
         // Shared by 2 users
         news_feed_url_references_list.push(NewsFeedUrlReferencesQuery {
             url_id: 1,
@@ -432,6 +460,6 @@ mod tests {
         assert_eq!(
             get_tweet_text_short(&news_feed_url_query),
             String::from("Example Title\n\nTweets: https://climatenews.app/news_feed/example-slug\n\nArticle link: https://www.theguardian.com/environment/2022/dec/12/brazil-goldminers-carve-road-to-chaos-amazon-reserve")
-        );                
+        );
     }
 }

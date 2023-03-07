@@ -3,3 +3,4 @@ pub const NEWS_FEED_URLS_LIMIT: i64 = 20;
 pub const NEWS_FEED_MIN_NUM_SHARES_BEFORE_TWEETING: i32 = 3;
 pub const NEWS_FEED_SLUG_NUM_WORDS: usize = 8;
 pub const MAX_TWEET_CHARACTER_COUNT: usize = 280;
+pub const TWEET_TEXT_LENGTH: usize = 23;
