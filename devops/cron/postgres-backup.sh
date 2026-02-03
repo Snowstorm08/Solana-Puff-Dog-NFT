@@ -1,37 +1,78 @@
-#!/bin/bash
-
-#configuration settings
-CURRENT_MONTH=$(date +%Y-%m)
-CURRENT_DATE=$(date +%Y-%m-%d)
-CURRENT_DATETIME=$(date +%d-%b-%Y_%H_%M_%Z)
-BACKUPS_PATH=/backups
-DOCKER_SWARM_SERVICE_NAME=climate_news_stack_db
-S3_BACKUP_BUCKET=climate-news-db-backup
+#!/usr/bin/env bash
+set -euo pipefail
 
 ####################################
-#backup PostgreSQL database
-BACKUP_FOLDER=$BACKUPS_PATH/$CURRENT_MONTH/$CURRENT_DATE
-if [ ! -d "$BACKUP_FOLDER" ]; then
-    mkdir -p "$BACKUP_FOLDER"
+# Configuration
+####################################
+CURRENT_MONTH="$(date +%Y-%m)"
+CURRENT_DATE="$(date +%Y-%m-%d)"
+CURRENT_DATETIME="$(date +%Y-%m-%d_%H-%M-%S_%Z)"
+
+BACKUPS_PATH="/backups"
+DOCKER_SWARM_SERVICE_NAME="climate_news_stack_db"
+S3_BACKUP_BUCKET="climate-news-db-backup"
+
+# Required env vars (fail if missing)
+: "${POSTGRES_DB:?POSTGRES_DB not set}"
+: "${POSTGRES_USER:?POSTGRES_USER not set}"
+
+####################################
+# Paths
+####################################
+BACKUP_FOLDER="${BACKUPS_PATH}/${CURRENT_MONTH}/${CURRENT_DATE}"
+BACKUP_FILENAME="${POSTGRES_DB}_${CURRENT_DATETIME}.sql.gz"
+LOCAL_BACKUP_PATH="${BACKUP_FOLDER}/${BACKUP_FILENAME}"
+S3_BACKUP_PATH="s3://${S3_BACKUP_BUCKET}${BACKUP_FOLDER}/"
+
+####################################
+# Prepare directories
+####################################
+mkdir -p "${BACKUP_FOLDER}"
+
+echo "📦 Starting PostgreSQL backup"
+echo "📁 Backup folder: ${BACKUP_FOLDER}"
+
+####################################
+# Get running container ID from Swarm
+####################################
+TASK_ID="$(docker service ps \
+    --filter "desired-state=running" \
+    --format '{{.ID}}' \
+    "${DOCKER_SWARM_SERVICE_NAME}" | head -n1)"
+
+if [[ -z "${TASK_ID}" ]]; then
+    echo "❌ No running task found for service ${DOCKER_SWARM_SERVICE_NAME}"
+    exit 1
 fi
 
-echo 'Creating PostgreSQL backup...'
-cd "$BACKUP_FOLDER"
-if [ -f 'dump_'"$POSTGRES_DB"'.sql' ]; then
-   rm 'dump_'"$POSTGRES_DB"'.sql'
+CONTAINER_ID="$(docker inspect \
+    --format '{{.Status.ContainerStatus.ContainerID}}' \
+    "${TASK_ID}")"
+
+if [[ -z "${CONTAINER_ID}" ]]; then
+    echo "❌ Failed to resolve container ID"
+    exit 1
 fi
-db_backup_filename=$POSTGRES_DB'_'$CURRENT_DATETIME'.tar.gz'
-postgres_container_id=$(docker service ps -f "name=$DOCKER_SWARM_SERVICE_NAME" $DOCKER_SWARM_SERVICE_NAME -q --no-trunc | head -n1)
-docker exec -t $DOCKER_SWARM_SERVICE_NAME.1."$postgres_container_id" pg_dump -U $POSTGRES_USER $POSTGRES_DB > 'dump_'"$POSTGRES_DB"'.sql'
-tar -cf - 'dump_'"$POSTGRES_DB"'.sql' | gzip -9 > "$db_backup_filename"
-rm 'dump_'"$POSTGRES_DB"'.sql'
 
-echo 'Uploading PostgreSQL backup to S3 bucket'
-aws s3 cp $BACKUP_FOLDER/$db_backup_filename s3://$S3_BACKUP_BUCKET$BACKUP_FOLDER
+####################################
+# Dump & compress database
+####################################
+echo "🗄️  Dumping database: ${POSTGRES_DB}"
 
-echo 'removing backup'
-rm $BACKUP_FOLDER/$db_backup_filename
+docker exec -t "${CONTAINER_ID}" \
+    pg_dump -U "${POSTGRES_USER}" "${POSTGRES_DB}" \
+    | gzip -9 > "${LOCAL_BACKUP_PATH}"
 
-cd "$BACKUP_FOLDER"
+####################################
+# Upload to S3
+####################################
+echo "☁️  Uploading backup to S3"
+aws s3 cp "${LOCAL_BACKUP_PATH}" "${S3_BACKUP_PATH}"
 
-echo 'Done. '
+####################################
+# Cleanup
+####################################
+echo "🧹 Removing local backup"
+rm -f "${LOCAL_BACKUP_PATH}"
+
+echo "✅ Backup completed successfully"
