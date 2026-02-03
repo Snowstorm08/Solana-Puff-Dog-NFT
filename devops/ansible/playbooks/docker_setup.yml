@@ -1,59 +1,82 @@
 ---
-- hosts: all
+- name: Install Docker and Docker Compose
+  hosts: all
   become: true
-  tasks:
-    - include_vars: docker.yml
-    - name: Install packages using apt
-      apt:
-        name: 
-            - apt-transport-https
-            - ca-certificates
-            - curl
-            - gnupg2
-            - software-properties-common
-        state: present
-        update_cache: no
-    - name: Add Docker GPG apt Key
-      apt_key:
-        url: "{{ docker_apt_gpg_key }}"
-        state: present
 
-    - name: Add Docker Repository
+  vars_files:
+    - docker.yml
+
+  handlers:
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
+
+  tasks:
+    - name: Install required system packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - software-properties-common
+        state: present
+        update_cache: true
+
+    - name: Create Docker keyring directory
+      file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Add Docker GPG key
+      get_url:
+        url: "{{ docker_apt_gpg_key }}"
+        dest: /etc/apt/keyrings/docker.gpg
+        mode: '0644'
+
+    - name: Add Docker APT repository
       apt_repository:
         repo: "{{ docker_apt_repository }}"
         state: present
         update_cache: true
 
-    - name: Update apt and install docker-ce
+    - name: Install Docker Engine
       apt:
-        name: docker-ce
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
         state: present
-        update_cache: false
 
-    - name: Run and enable docker
+    - name: Enable and start Docker
       service:
         name: docker
         state: started
         enabled: true
+      notify: restart docker
 
     - name: Check current docker-compose version
       command: docker-compose --version
       register: docker_compose_vsn
       changed_when: false
       failed_when: false
-      check_mode: no
 
-    - set_fact:
-        docker_compose_current_version: "{{ docker_compose_vsn.stdout | regex_search('(\\d+(\\.\\d+)+)') }}"
-      when:
-        - docker_compose_vsn.stdout is defined   
+    - name: Extract current docker-compose version
+      set_fact:
+        docker_compose_current_version: >-
+          {{ docker_compose_vsn.stdout
+             | regex_search('(\\d+\\.\\d+\\.\\d+)') }}
+      when: docker_compose_vsn.stdout is defined
 
     - name: Install or upgrade docker-compose
-      get_url: 
-        url : "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-Linux-x86_64"
+      get_url:
+        url: "https://github.com/docker/compose/releases/download/{{ docker_compose_version }}/docker-compose-linux-x86_64"
         dest: /usr/local/bin/docker-compose
-        mode: 'a+x'
-        force: yes
-      when: >
-        docker_compose_current_version is not defined
-        or docker_compose_current_version is version(docker_compose_version, '<')
+        mode: '0755'
+        force: true
+      when:
+        - docker_compose_current_version is not defined
+          or docker_compose_current_version is version(docker_compose_version, '<')
